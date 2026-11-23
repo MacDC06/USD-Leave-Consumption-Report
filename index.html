@@ -355,6 +355,11 @@
     #toastMsg{position:fixed;bottom:24px;right:24px;background:var(--sap-deep-navy);color:#FFF;padding:12px 20px;border-radius:6px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:360px;}
     #toastMsg.show{opacity:1;}
     .footer{text-align:center;padding:20px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);margin-top:16px;}
+
+    /* Entitlement click-filter */
+    .ent-name-cell{cursor:pointer;color:var(--sap-blue-dark);}
+    .ent-name-cell:hover{text-decoration:underline;}
+    tr.ent-row-active td{background:var(--sap-blue-sky,#D1EFFF)!important;}
   </style>
 </head>
 <body>
@@ -981,6 +986,7 @@ function _sapLogoSVG(gid, style='') {
           <div id="ssDashboardContent" style="display:none">
             <div class="tab-nav">
               <button class="tab-btn active" onclick="ssSwitchTab('ss-tab-records',this)">Records</button>
+              <button class="tab-btn" id="btn-ss-tab-myack" onclick="ssSwitchTab('ss-tab-myack',this);renderMyAckTable()">For My Acknowledgment <span id="myAckCount" style="display:none;background:#CC0000;color:#FFF;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px"></span></button>
               <button class="tab-btn" onclick="ssSwitchTab('ss-tab-frequency',this);renderSSFrequency()">Frequency</button>
               <button class="tab-btn" id="btn-ss-tab-admin" style="display:none;color:#B45309" onclick="ssSwitchTab('ss-tab-admin',this);renderSSAdminTable()">Admin</button>
             </div>
@@ -1156,6 +1162,35 @@ function _sapLogoSVG(gid, style='') {
               </div>
             </div>
 
+
+            <!-- SS Tab: For My Acknowledgment -->
+            <div id="ss-tab-myack" class="tab-pane">
+              <div class="table-card">
+                <div class="table-header">
+                  <strong style="font-size:13px">Slide / Swap Requests Awaiting My Acknowledgment</strong>
+                  <span class="table-count" id="myAckTableCount"></span>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead><tr>
+                      <th>#</th>
+                      <th>Req #</th>
+                      <th>Requestor</th>
+                      <th>Team Lead</th>
+                      <th>Swap Partner</th>
+                      <th>Shift Date</th>
+                      <th>Their Schedule</th>
+                      <th>Your Schedule</th>
+                      <th>Ack Status</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr></thead>
+                    <tbody id="myAckTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
             <!-- SS Tab: Admin -->
             <div id="ss-tab-admin" class="tab-pane">
               <div class="table-card">
@@ -1196,6 +1231,7 @@ function _sapLogoSVG(gid, style='') {
                       <tr>
                         <th>#</th>
                         <th class="th-sortable" onclick="sortSSAdminTable('requestorName')">Requestor <span class="th-sort-icon" id="ssath-requestorName">⇅</span></th>
+                        <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('title')">Req # <span class="th-sort-icon" id="ssath-title">⇅</span></th>
                         <th class="th-sortable" onclick="sortSSAdminTable('reqType')">Type <span class="th-sort-icon" id="ssath-reqType">⇅</span></th>
                         <th class="th-sortable" onclick="sortSSAdminTable('status')">Status <span class="th-sort-icon" id="ssath-status">⇅</span></th>
                         <th class="th-sortable" onclick="sortSSAdminTable('shiftDate')">Shift Date <span class="th-sort-icon" id="ssath-shiftDate">⇅</span></th>
@@ -1643,8 +1679,28 @@ function _applyHeaderBadge(){
 async function graphGet(url) {
   const t=await getToken();
   const r=await fetch(url,{headers:{Authorization:`Bearer ${t}`}});
-  if(!r.ok){const tx=await r.text();throw new Error(`Graph API error ${r.status}: ${tx}`);}
+  if(!r.ok){
+    const tx=await r.text();
+    if(r.status===401||r.status===403)_showReconnectBanner(r.status,tx);
+    throw new Error(`Graph API error ${r.status}: ${tx}`);
+  }
   return r.json();
+}
+/* Show a dismissable reconnect banner on auth errors */
+function _showReconnectBanner(status,msg){
+  if(document.getElementById("_reconnectBanner"))return;
+  const b=document.createElement("div");
+  b.id="_reconnectBanner";
+  const is401=status===401;
+  b.innerHTML=`<strong>${is401?"Session expired":"Access denied"} (${status}).</strong> `
+    +`${is401?"Your Microsoft session needs to be renewed.":"You may not have permission for this resource."} `
+    +`<a href="#" onclick="signIn().then(()=>{document.getElementById('_reconnectBanner')?.remove()});return false" `
+    +`style="color:#004A8F;font-weight:700;margin-left:8px;text-decoration:underline">&#x1F517; Sign in again</a>`
+    +`<a href="#" onclick="this.closest('div').remove();return false" `
+    +`style="color:#666;margin-left:14px;font-size:12px">Dismiss</a>`;
+  b.style.cssText="position:fixed;top:54px;left:0;right:0;z-index:9000;background:#FFF3CD;"
+    +"color:#856404;padding:8px 20px;font-size:13px;text-align:center;border-bottom:1px solid #FCDBA0;";
+  document.body.appendChild(b);
 }
 async function graphPost(url,body) {
   const t=await getToken();
@@ -2244,6 +2300,17 @@ function initEntitlementTab(){
   tlEl.innerHTML='<option value="">All TLs</option>'+ALLOWED_TLS.map(t=>`<option>${escHtml(t)}</option>`).join("");
   renderEntitlementTable();
 }
+
+function _entFilterByName(name){
+  const el=document.getElementById('entName');if(!el)return;
+  el.value=el.value.toLowerCase().trim()===name.toLowerCase().trim()?'':name;
+  renderEntitlementTable();
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});el.focus();
+}
+function _entIsFiltered(name){
+  const el=document.getElementById('entName');if(!el||!el.value.trim())return false;
+  return (name||'').toLowerCase().trim()===el.value.toLowerCase().trim();
+}
 function renderEntitlementTable(){
   const yr=document.getElementById("entYear").value,gr=document.getElementById("entGroup").value;
   const nm=(document.getElementById("entName").value||'').toLowerCase().trim();
@@ -2300,8 +2367,13 @@ function renderEntitlementTable(){
   const tbody=document.getElementById("entTableBody");if(!tbody)return;
   if(!rows.length){tbody.innerHTML=`<tr><td colspan="9" class="empty-state"><p>No data.</p></td></tr>`;return;}
   tbody.innerHTML=rows.map((r,i)=>{
-    return`<tr><td style="color:var(--text-muted)">${i+1}</td><td><strong>${escHtml(r.name||r.email)}</strong></td><td><span class="badge badge-group">${escHtml(r.group)}</span></td><td>${escHtml(r.teamLead)}</td><td class="tc">${r.ent2026??'—'}</td><td class="tc">${r.cf2026??'—'}</td><td class="tc">${r.total??'—'}</td><td class="tc">${r.used}</td><td class="tc">${r.remaining??'—'}</td></tr>`;
+    const _nm=r.name||r.email;
+    return`<tr class="${_entIsFiltered(_nm)?'ent-row-active':''}"><td style="color:var(--text-muted)">${i+1}</td><td><span class="ent-name-cell" data-entname="${escHtml(_nm)}" title="Click to filter"><strong>${escHtml(_nm)}</strong></span></td><td><span class="badge badge-group">${escHtml(r.group)}</span></td><td>${escHtml(r.teamLead)}</td><td class="tc">${r.ent2026??'—'}</td><td class="tc">${r.cf2026??'—'}</td><td class="tc">${r.total??'—'}</td><td class="tc">${r.used}</td><td class="tc">${r.remaining??'—'}</td></tr>`;
   }).join("");
+  /* Wire name-click filters */
+  tbody.querySelectorAll(".ent-name-cell[data-entname]").forEach(el=>{
+    el.addEventListener("click",()=>_entFilterByName(el.dataset.entname));
+  });
   const tbody2027=document.getElementById("entTableBody2027");if(!tbody2027)return;
   const rows2027=rows.filter(r=>r.group2027);
   if(!rows2027.length){tbody2027.innerHTML=`<tr><td colspan="9" class="empty-state"><p>No 2027 data.</p></td></tr>`;return;}
@@ -2844,7 +2916,7 @@ function ssRenderTable(){
   tbody.innerHTML=page.map((r,i)=>{
     const idx=allSSData.indexOf(r);
     const editCell=_admin?`<td><button class="btn-edit-record" onclick="openSSEditModal(${idx})">Edit</button></td>`:'';
-    return`<tr><td style="color:var(--text-muted)">${start+i+1}</td><td><strong>${escHtml(r.requestorName||r.title)}</strong></td><td>${ssReqTypeBadge(r.reqType)}</td><td>${ssStatusBadge(r.status)}</td><td>${formatDate(r.shiftDate)}</td><td style="white-space:normal;max-width:130px;font-size:12px">${escHtml(r.originalSchedule)}</td><td>${escHtml(r.originalRD)}</td><td style="white-space:normal;max-width:130px;font-size:12px">${escHtml(r.requestedSchedule)}</td><td>${escHtml(r.requestedRD)}</td><td>${escHtml(r.swapName)}</td><td>${escHtml(r.swapAck)}</td><td>${escHtml(r.teamLead)}</td><td style="font-size:11px">${escHtml(r.swapEmail)}</td><td>${plottedBadge(r.plotted)}</td><td style="max-width:140px;white-space:normal;font-size:12px">${escHtml(r.reason)}</td><td style="max-width:140px;white-space:normal;font-size:12px">${escHtml(r.agentRemarks)}</td>${editCell}</tr>`;
+    return`<tr><td style="color:var(--text-muted)">${start+i+1}</td><td><strong>${escHtml(r.requestorName||r.title)}</strong></td><td style="white-space:nowrap;font-size:12px;color:var(--sap-blue-dark);font-weight:600">${escHtml(r.title||'—')}</td><td>${ssReqTypeBadge(r.reqType)}</td><td>${ssStatusBadge(r.status)}</td><td>${formatDate(r.shiftDate)}</td><td style="white-space:normal;max-width:130px;font-size:12px">${escHtml(r.originalSchedule)}</td><td>${escHtml(r.originalRD)}</td><td style="white-space:normal;max-width:130px;font-size:12px">${escHtml(r.requestedSchedule)}</td><td>${escHtml(r.requestedRD)}</td><td>${escHtml(r.swapName)}</td><td>${escHtml(r.swapAck)}</td><td>${escHtml(r.teamLead)}</td><td style="font-size:11px">${escHtml(r.swapEmail)}</td><td>${plottedBadge(r.plotted)}</td><td style="max-width:140px;white-space:normal;font-size:12px">${escHtml(r.reason)}</td><td style="max-width:140px;white-space:normal;font-size:12px">${escHtml(r.agentRemarks)}</td>${editCell}</tr>`;
   }).join("");
   renderPagination(document.getElementById("ssTablePagination"),ssCurrentPage,total,(p)=>{ssCurrentPage=p;ssRenderTable();const tw=document.querySelector("#ss-tab-records .table-wrap");if(tw)tw.scrollTop=0;});
 }
@@ -2987,6 +3059,60 @@ async function confirmDeleteAction(){
   } catch(e) { console.error(e);document.getElementById("confirmMsg").textContent="Delete failed: "+(e.message||String(e));btn.disabled=false;btn.textContent="Delete"; }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+   TEAMS NOTIFICATIONS VIA POWER AUTOMATE
+   Set _TEAMS_ENABLED=true and paste PA webhook URL to enable.
+   The app sends JSON to PA which posts an Adaptive Card DM to recipients.
+   ══════════════════════════════════════════════════════════════════════ */
+const _TEAMS_ENABLED    = false;   // ← set true after PA flow is configured
+const _PA_TEAMS_WEBHOOK = "";      // ← paste Power Automate HTTP trigger URL here
+
+async function _sendTeamsNotif(toEmail, payload){
+  if(!_TEAMS_ENABLED||!_PA_TEAMS_WEBHOOK)return;
+  try{
+    const res=await fetch(_PA_TEAMS_WEBHOOK,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({recipientEmail:toEmail,...payload})
+    });
+    if(res.ok)console.log('[TEAMS] ✅ Queued for',toEmail);
+    else{const tx=await res.text();throw new Error(`PA responded ${res.status}: ${tx.slice(0,200)}`);}
+  }catch(e){
+    console.error('[TEAMS] ❌ Failed for',toEmail,':',e.message);
+    if(isAdmin()||isWFM())showToast('Teams (PA) failed for '+toEmail+': '+e.message.slice(0,100));
+  }
+}
+
+function _buildTeamsPayload(rec,statusLabel,isSwapType,typeName,reqNum,shiftDate,wfmAck){
+  const st=(statusLabel||'').toUpperCase();
+  return{
+    reqType:isSwapType?'Swap':'Slide',typeName,reqNum,status:st,
+    statusLabel:st==='FOR ACKNOWLEDGEMENT'?'For Acknowledgement':st.charAt(0)+st.slice(1).toLowerCase(),
+    shiftDate,requestorName:rec.requestorName||'—',
+    origSchedule:[rec.originalSchedule,rec.originalRD].filter(Boolean).join(' | ')||'—',
+    reqSchedule:[rec.requestedSchedule,rec.requestedRD].filter(Boolean).join(' | ')||'—',
+    swapPartner:rec.swapName||'',
+    swapSchedule:isSwapType?[rec.requestedSchedule,rec.requestedRD].filter(Boolean).join(' | '):'',
+    ackStatus:fmtSwapAck(rec)||'',wfmOnBehalf:!!(wfmAck),
+    reason:rec.agentRemarks||rec.reason||'',teamLead:rec.teamLead||'',
+    toolUrl:window.location.href
+  };
+}
+
+function _buildAndSendTeamsNotif(rec,statusLabel,opts){
+  if(!_TEAMS_ENABLED)return;
+  const isSwap=(rec.reqType||'').toLowerCase()==='swap';
+  const typeName=isSwap?'Schedule Swap':'Schedule Slide';
+  const reqNum=rec.title||'—';
+  const shiftDate=rec.shiftDate?new Date(rec.shiftDate).toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'}):rec.shiftDate||'—';
+  const payload=_buildTeamsPayload(rec,statusLabel,isSwap,typeName,reqNum,shiftDate,opts?.wfmOnBehalf);
+  const recipients=[];
+  const addR=e=>{if(e&&!recipients.includes(e))recipients.push(e);};
+  addR(rec.agentEmail||rec.requestorEmail||null);
+  if(isSwap)addR(rec.swapEmail||null);
+  recipients.forEach(email=>_sendTeamsNotif(email,payload));
+}
+
 /* ══════════════ SS EDIT MODAL ══════════════ */
 let editingSSRecord=null;
 /* ══════════════ APPLY REQUEST ══════════════ */
@@ -3014,10 +3140,11 @@ function openSSApplyModal(){
     const myTL=myRLS.teamLead||"";
     tlEl.innerHTML='<option value="">— Select TL —</option>'+ALLOWED_TLS.map(t=>`<option value="${escHtml(t)}"${t===myTL?' selected':''}>${escHtml(t)}</option>`).join("");
   } else {
-    // Author / WFM / Manager: editable name, full TL list
-    nameInput.style.display=""; nameSelect.style.display="none";
-    nameInput.readOnly=false; nameInput.value=myName;
-    document.getElementById("arfNameLabel").innerHTML='Requestor Name <span style="color:#CC0000">*</span>';
+    // Author / WFM: dropdown of ALL roster agents, TL auto-fills on selection
+    nameInput.style.display="none"; nameSelect.style.display="";
+    document.getElementById("arfNameLabel").innerHTML='Apply on Behalf of <span style="color:#CC0000">*</span>';
+    const allMembers=Object.values(rlsData).filter(r=>r.name&&r.role==="agent").sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+    nameSelect.innerHTML='<option value="">— Select Member —</option>'+allMembers.map(r=>`<option value="${escHtml(r.name)}">${escHtml(r.name)}</option>`).join("");
     tlEl.innerHTML='<option value="">— Select TL —</option>'+ALLOWED_TLS.map(t=>`<option value="${escHtml(t)}">${escHtml(t)}</option>`).join("");
   }
   document.getElementById("arfReqType").value="Slide";
@@ -3041,6 +3168,149 @@ function ssApplyTypeChange(){
   const isSwap=document.getElementById("arfReqType").value.toLowerCase()==="swap";
   document.getElementById("arfSwapSection").style.display=isSwap?"":"none";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SLIDE / SWAP ACKNOWLEDGMENT SYSTEM
+   field_9 format: "SP=Y;RTL=N;STL="   (Y=acked, N=declined, blank=pending)
+   ══════════════════════════════════════════════════════════════════════ */
+const _ACK_SLOTS = ['SP','RTL','STL'];
+function _parseAck(str){
+  const a={SP:'',RTL:'',STL:''};
+  (str||'').split(';').forEach(p=>{const[k,v]=(p||'').split('=');if(k&&k in a)a[k.trim()]=v||'';});
+  return a;
+}
+function _ackStr(a){return _ACK_SLOTS.map(k=>`${k}=${a[k]||''}`).join(';');}
+function _ackRequired(r){
+  const isSwap=(r.reqType||'').toLowerCase()==='swap';
+  return{SP:isSwap,RTL:true,STL:isSwap};
+}
+function _mySlots(r){
+  const a=_parseAck(r.swapAck),req=_ackRequired(r);
+  const myNameL=(currentUserName||'').toLowerCase().trim();
+  const myEmail=(currentUserEmail||'').toLowerCase();
+  const rls=rlsData[myEmail]||{};
+  const slots=[];
+  // SP: I am the swap partner
+  if(req.SP){
+    const spName=(r.swapName||'').toLowerCase().trim();
+    const spEmail=(r.swapEmail||'').toLowerCase();
+    if((spEmail&&spEmail===myEmail)||(spName&&spName===myNameL)) slots.push('SP');
+  }
+  // RTL: I am the requestor's TL
+  if(req.RTL){
+    const rtl=(r.teamLead||'').toLowerCase().trim();
+    if(rtl&&rtl===myNameL) slots.push('RTL');
+  }
+  // STL: I am the swap partner's TL
+  if(req.STL){
+    const stl=(r.swapTL||'').toLowerCase().trim();
+    if(stl&&stl===myNameL) slots.push('STL');
+  }
+  return slots.filter(k=>a[k]!=='Y'&&a[k]!=='N');
+}
+function _ackLabel(k){return k==='SP'?'Swap Partner':k==='RTL'?'Requestor TL':'Swap Partner TL';}
+function fmtSwapAck(r){
+  const rt=(r.reqType||'').toLowerCase();
+  if(rt!=='swap'&&rt!=='slide')return r.swapAck||'';
+  const a=_parseAck(r.swapAck),req=_ackRequired(r),parts=[];
+  _ACK_SLOTS.forEach(k=>{if(req[k]){const v=a[k]==='Y'?'✓':a[k]==='N'?'✗':'—';parts.push(`${_ackLabel(k)}: ${v}`);}});
+  return parts.join(' | ')||(r.swapAck||'—');
+}
+function _isMySwapToAck(r){
+  const rt=(r.reqType||'').toLowerCase();
+  if(rt!=='swap'&&rt!=='slide')return false;
+  if((r.status||'').toUpperCase().trim()!=='FOR ACKNOWLEDGEMENT')return false;
+  if(isAdmin()||isWFM())return true;
+  return _mySlots(r).length>0;
+}
+function updateMyAckCount(){
+  const n=(allSSData||[]).filter(_isMySwapToAck).length;
+  const b=document.getElementById('myAckCount');
+  if(b){if(n>0){b.textContent=n;b.style.display='inline-block';}else{b.style.display='none';}}
+}
+function renderMyAckTable(){
+  const rows=(allSSData||[]).filter(_isMySwapToAck);
+  const cnt=document.getElementById('myAckTableCount');
+  if(cnt)cnt.textContent=`${rows.length} request${rows.length!==1?'s':''} to acknowledge`;
+  const tbody=document.getElementById('myAckTableBody');if(!tbody)return;
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="11" class="empty-state"><p>No requests awaiting your acknowledgment.</p></td></tr>`;updateMyAckCount();return;}
+  tbody.innerHTML=rows.map(r=>{
+    const idx=allSSData.indexOf(r);
+    const theirSched=[r.originalSchedule,r.originalRD].filter(Boolean).join(' || ')||'—';
+    const mySched=[r.requestedSchedule,r.requestedRD].filter(Boolean).join(' || ')||'—';
+    const mine=_mySlots(r);
+    const pendingTLSlots=(()=>{
+      if(mine.length||!isWFM())return[];
+      const a=_parseAck(r.swapAck),req=_ackRequired(r);
+      return _ACK_SLOTS.filter(k=>req[k]&&a[k]!=='Y'&&a[k]!=='N');
+    })();
+    const canAct=mine.length>0||pendingTLSlots.length>0;
+    return`<tr>
+      <td style="color:var(--text-muted)">${idx+1}</td>
+      <td style="font-weight:700;color:var(--sap-blue-dark);white-space:nowrap">${escHtml(r.title||'—')}</td>
+      <td style="white-space:nowrap"><strong>${escHtml(r.requestorName||'—')}</strong></td>
+      <td style="white-space:nowrap">${escHtml(r.teamLead||'—')}</td>
+      <td style="white-space:nowrap"><strong>${escHtml(r.swapName||'—')}</strong></td>
+      <td style="white-space:nowrap">${formatDate(r.shiftDate)}</td>
+      <td style="white-space:nowrap;font-size:12px">${escHtml(theirSched)}</td>
+      <td style="white-space:nowrap;font-size:12px">${escHtml(mySched)}</td>
+      <td style="font-size:11.5px;color:var(--text-muted)">${escHtml(fmtSwapAck(r))}</td>
+      <td style="white-space:nowrap">${ssStatusBadge(r.status)}</td>
+      <td style="white-space:nowrap">
+        ${canAct
+          ?`<button class="btn-approve-ss" data-ackidx="${idx}">Acknowledge</button>
+            <button class="btn-delete-record" data-declineidx="${idx}" style="margin-left:4px">Decline</button>`
+          :`<span style="font-size:11px;color:#999;font-style:italic">View only</span>`}
+      </td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('[data-ackidx]').forEach(b=>b.addEventListener('click',()=>ackSwap(+b.dataset.ackidx,true)));
+  tbody.querySelectorAll('[data-declineidx]').forEach(b=>b.addEventListener('click',()=>ackSwap(+b.dataset.declineidx,false)));
+  updateMyAckCount();
+}
+async function ackSwap(idx,approve){
+  const r=allSSData[idx];if(!r)return;
+  if(!r._itemId){showToast('Cannot update: no SharePoint item ID.');return;}
+  let mine=_mySlots(r);
+  let _wfmOnBehalf=false;
+  /* WFM acknowledges ALL pending slots (SP + RTL + STL) on behalf of all parties */
+  if(!mine.length&&isWFM()){
+    const a=_parseAck(r.swapAck),req=_ackRequired(r);
+    mine=_ACK_SLOTS.filter(k=>req[k]&&a[k]!=='Y'&&a[k]!=='N');
+    if(!mine.length){showToast('All parties are already acknowledged.');return;}
+    _wfmOnBehalf=true;
+  }
+  if(!mine.length){showToast('You are not a required acknowledger for this request.');return;}
+  const roleTxt=_wfmOnBehalf?'All parties (WFM on behalf)':mine.map(_ackLabel).join(', ');
+  if(!confirm(`${approve?'Acknowledge':'Decline'} "${r.title||''}" as ${roleTxt}?`))return;
+  const a=_parseAck(r.swapAck),req=_ackRequired(r);
+  let newStatus,remark;
+  if(!approve){
+    mine.forEach(k=>{a[k]='N';});
+    newStatus='REJECTED';
+    remark=`Declined by ${roleTxt}`;
+  } else {
+    mine.forEach(k=>{a[k]='Y';});
+    const allDone=_ACK_SLOTS.every(k=>!req[k]||a[k]==='Y');
+    newStatus=allDone?'PENDING':'FOR ACKNOWLEDGEMENT';
+    remark=allDone?'All parties acknowledged — pending WFM':_wfmOnBehalf?'All parties acknowledged by WFM on behalf':`Approved by ${roleTxt}`;
+  }
+  const f={field_2:newStatus,field_9:_ackStr(a)};
+  const url=`https://graph.microsoft.com/v1.0/sites/${ssSiteIdCache}/lists/${LIST_SS_ID}/items/${r._itemId}/fields`;
+  try{
+    showToast('Submitting…');
+    await graphPatch(url,f);
+    r.status=newStatus;r.swapAck=f.field_9;
+    if(_TEAMS_ENABLED) _buildAndSendTeamsNotif(r,newStatus,{wfmOnBehalf:_wfmOnBehalf});
+    if(!approve) showToast((r.reqType||'Request')+' declined.');
+    else if(newStatus==='PENDING') showToast('All parties acknowledged. Now PENDING for approval.');
+    else showToast(_wfmOnBehalf?'All parties acknowledged on behalf by WFM.':'Acknowledged. Awaiting remaining parties.');
+    renderMyAckTable();
+    // also refresh admin table if visible
+    if(document.getElementById('ss-tab-admin')?.classList.contains('active')) renderSSAdminTable();
+  }catch(e){showToast('Update failed: '+(e.message||String(e)));}
+}
+
 async function submitSSRequest(){
   if(!currentUserRole){showToast("Not authorized to submit requests.");return;}
   if(!ssSiteIdCache){showToast("Data not ready. Please wait for the list to finish loading.");return;}
@@ -3068,6 +3338,7 @@ async function submitSSRequest(){
     await graphPost(url,{fields:f});
     msg.textContent="Request submitted successfully!";msg.style.color="#1B7A3A";
     showToast("Your "+rt+" request has been submitted.");
+    if(_TEAMS_ENABLED){const _r={title:f.Title,requestorName:nm,reqType:rt,shiftDate:f.ShiftDate,originalSchedule:f.field_3||"",originalRD:f.OriginalRD||"",requestedSchedule:f.field_5||"",requestedRD:f.RequestedRD||"",swapName:f.field_4||"",swapEmail:f.field_6||"",teamLead:f.field_7||"",reason:f.Reason||"",swapAck:f.field_9||""};_buildAndSendTeamsNotif(_r,"FOR ACKNOWLEDGEMENT");}
     setTimeout(closeSSApplyModal,1400);
     setTimeout(loadSSData,1600);
   }catch(e){
@@ -3109,6 +3380,17 @@ function openSSEditModal(idx){
   const r=allSSData[idx];if(!r)return; editingSSRecord=r;
   document.getElementById("ssModalTitle").textContent="Edit Slide / Swap Record";
   document.getElementById("ssModalSubtitle").textContent=(r.requestorName||r.title||"")+(r._itemId?"  ·  Item ID: "+r._itemId:"");
+  /* WFM can edit all fields; non-WFM locked to status/admin fields only */
+  const _wfmFullEdit=isWFM();
+  ['sfShiftDate','sfOriginalSchedule','sfOriginalRD','sfRequestedSchedule','sfRequestedRD',
+   'sfSwapName','sfSwapEmail','sfSwapTL','sfReason'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(_wfmFullEdit){el.readOnly=false;el.disabled=false;el.style.background="";el.style.cursor="";el.style.opacity="";}
+    else{el.readOnly=true;el.disabled=true;el.style.background="var(--bg-secondary,#F5F6F7)";el.style.cursor="not-allowed";el.style.opacity=".7";}
+  });
+  ['sfStatus','sfTeamLead','sfPlotted','sfAgentRemarks','sfSwapAck','sfReqType'].forEach(id=>{
+    const el=document.getElementById(id);if(el){el.disabled=false;el.readOnly=false;el.style.background="";el.style.cursor="";el.style.opacity="";}
+  });
   document.getElementById("sfRequestorName").value=r.requestorName||r.title||"";
   document.getElementById("sfReqType").value=r.reqType||"";
   document.getElementById("sfStatus").value=(r.status||"PENDING").toUpperCase();
