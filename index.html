@@ -21,7 +21,10 @@
     {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"POST","path":"/v1.0/sites/{siteId}/drive/{driveRoot}/{folder}/{fileColon}/workbook/createSession"},
     {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"POST","path":"/v1.0/sites/{siteId}/drive/{driveRoot}/{folder}/{fileColon}/workbook/closeSession"},
     {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"GET","path":"/v1.0/sites/{siteId}/drive/{driveRoot}/{folder}/{fileColon}/workbook/worksheets/{sheet}/{operation}"},
-    {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"PATCH","path":"/v1.0/sites/{siteId}/drive/{driveRoot}/{folder}/{fileColon}/workbook/worksheets/{sheet}/{operation}"}
+    {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"PATCH","path":"/v1.0/sites/{siteId}/drive/{driveRoot}/{folder}/{fileColon}/workbook/worksheets/{sheet}/{operation}"},
+    {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"GET","path":"/v1.0/users/{userId}"},
+    {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"POST","path":"/v1.0/chats"},
+    {"rpc_id":"529a6c03-cbf4-459e-94cd-1956011f9cf9","method":"POST","path":"/v1.0/chats/{chatId}/messages"}
   ]' />
   <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'nonce-PLACEHOLDER' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com"/>
   <script>(function(){try{var t=localStorage.getItem("usd_dashboard_theme_v1")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})()</script>
@@ -900,7 +903,6 @@ function _sapLogoSVG(gid, style='') {
           <span class="snav-label">Admin</span>
         </div>
       </div>
-
       <div class="snav-sub" id="snav-sub-leave" style="display:none">
         <div class="snav-sub-item" id="snav-navsub-table" onclick="navGoLeaveTab('table')">
           <svg class="snav-sub-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -1464,9 +1466,12 @@ document.addEventListener("DOMContentLoaded", function() {
       </div><!-- /section-leave -->
 
 
-      <!-- ════ ATTENDANCE TRACKER SECTION ════ -->
+      <!-- ════════════════════════════════════
+           ATTENDANCE TRACKER SECTION
+      ════════════════════════════════════ -->
       <div class="app-section" id="section-attend" style="display:none">
         <div class="page-wrapper">
+          <!-- Banner -->
           <div class="page-banner" style="background:linear-gradient(135deg,#003459 0%,#00587A 100%)">
             <div>
               <h1>Attendance Tracker</h1>
@@ -1483,25 +1488,32 @@ document.addEventListener("DOMContentLoaded", function() {
               </button>
             </div>
           </div>
+
+          <!-- Loading / Error states -->
           <div id="atLoadingState" style="display:none;text-align:center;padding:60px 20px">
             <div class="spinner" style="margin:0 auto 16px"></div>
             <p style="color:var(--text-muted)">Loading attendance records…</p>
           </div>
           <div id="atErrorState" style="display:none;text-align:center;padding:60px 20px">
-            <p style="color:#CC0000" id="atErrorMsg">Failed to load.</p>
+            <p style="color:#CC0000" id="atErrorMsg">Failed to load attendance data.</p>
             <button class="btn-primary" style="margin-top:12px" onclick="loadAttendData()">Retry</button>
           </div>
+
+          <!-- Dashboard content -->
           <div id="atDashboardContent" style="display:none">
+            <!-- Tabs -->
             <div class="section-tabs">
               <button class="tab-btn active" id="btn-at-tab-records" onclick="atSwitchTab('at-tab-records',this)">Records</button>
               <button class="tab-btn" id="btn-at-tab-admin" style="display:none;color:#B45309" onclick="atSwitchTab('at-tab-admin',this)">Admin</button>
             </div>
-            <!-- Records Tab -->
+
+            <!-- ── Records Tab ── -->
             <div id="at-tab-records" class="tab-pane active">
+              <!-- Filter Bar -->
               <div class="filter-bar" style="margin-bottom:12px">
                 <input class="fb-input" id="atFilterName" placeholder="Search agent name…" oninput="renderATTable()">
-                <input type="date" class="fb-input" id="atFilterFrom" title="From" onchange="renderATTable()">
-                <input type="date" class="fb-input" id="atFilterTo"   title="To"   onchange="renderATTable()">
+                <input type="date" class="fb-input" id="atFilterFrom" title="Date from" onchange="renderATTable()">
+                <input type="date" class="fb-input" id="atFilterTo"   title="Date to"   onchange="renderATTable()">
                 <select class="filter-select" id="atFilterShift" onchange="renderATTable()">
                   <option value="">All Shifts</option>
                   <option>APA</option><option>MID</option>
@@ -1513,60 +1525,87 @@ document.addEventListener("DOMContentLoaded", function() {
                   <option value="_absent">Absent</option>
                   <option value="_late">Late / Under Time</option>
                   <option value="_leave">On Leave</option>
-                  <option disabled>──</option>
-                  <option>Absent</option><option>Late</option><option>Under Time</option>
+                  <option value="Absent">Absent</option>
+                  <option value="Late">Late</option>
+                  <option value="Under Time">Under Time</option>
+                  <option disabled>── Leave Types ──</option>
                   <option>Vacation Leave</option><option>Sick Leave</option>
                   <option>Medical Leave</option><option>Half Day VL</option>
-                  <option>Emergency Leave</option><option>Bereavement Leave</option>
+                  <option>Half Day SL</option><option>Emergency Leave</option>
+                  <option>Bereavement Leave</option><option>Maternity Leave</option>
+                  <option>Paternity Leave</option>
                 </select>
                 <select class="filter-select" id="atFilterOnsite" onchange="renderATTable()">
-                  <option value="">Onsite + WFH</option><option>Onsite</option><option>WFH</option>
+                  <option value="">Onsite + WFH</option>
+                  <option>Onsite</option><option>WFH</option>
                 </select>
                 <select class="filter-select" id="atFilterPlotted" onchange="renderATTable()">
                   <option value="">All Plotted</option>
-                  <option value="Yes">Plotted: Yes</option><option value="No">Plotted: No</option>
+                  <option value="Yes">Plotted: Yes</option>
+                  <option value="No">Plotted: No</option>
                 </select>
                 <button class="btn-secondary" onclick="clearATFilters()">Clear</button>
               </div>
               <div id="atRecordCount" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
               <div class="table-wrap">
                 <table class="data-table">
-                  <thead><tr>
-                    <th style="width:36px">#</th>
-                    <th class="th-sortable" onclick="sortATTable('agentName')">Agent Name <span class="th-sort-icon" id="ath-agentName">⇅</span></th>
-                    <th class="th-sortable" onclick="sortATTable('shiftDate')">Shift Date <span class="th-sort-icon" id="ath-shiftDate">⇅</span></th>
-                    <th>Schedule (MNL)</th><th>Actual Time</th>
-                    <th class="tc th-sortable" onclick="sortATTable('shiftType')">Shift <span class="th-sort-icon" id="ath-shiftType">⇅</span></th>
-                    <th class="tc">Onsite/WFH</th>
-                    <th class="th-sortable" onclick="sortATTable('tagging')">Tagging <span class="th-sort-icon" id="ath-tagging">⇅</span></th>
-                    <th>Reason</th><th class="tc">Plotted</th><th>Remarks</th>
-                  </tr></thead>
+                  <thead>
+                    <tr>
+                      <th style="width:36px">#</th>
+                      <th class="th-sortable" onclick="sortATTable('agentName')">Agent Name <span class="th-sort-icon" id="ath-agentName">⇅</span></th>
+                      <th class="th-sortable" onclick="sortATTable('shiftDate')">Shift Date <span class="th-sort-icon" id="ath-shiftDate">⇅</span></th>
+                      <th>Schedule (MNL)</th>
+                      <th>Actual Time</th>
+                      <th class="tc th-sortable" onclick="sortATTable('shiftType')">Shift <span class="th-sort-icon" id="ath-shiftType">⇅</span></th>
+                      <th class="tc">Onsite/WFH</th>
+                      <th class="th-sortable" onclick="sortATTable('tagging')">Tagging <span class="th-sort-icon" id="ath-tagging">⇅</span></th>
+                      <th>Reason</th>
+                      <th class="tc">Plotted</th>
+                      <th>Remarks</th>
+                    </tr>
+                  </thead>
                   <tbody id="atTableBody"></tbody>
                 </table>
               </div>
-            </div>
-            <!-- Admin Tab -->
+            </div><!-- /at-tab-records -->
+
+            <!-- ── Admin Tab ── -->
             <div id="at-tab-admin" class="tab-pane">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-                <input class="fb-input" id="atAdminSearch" placeholder="Search name or tagging…" oninput="renderATAdminTable()" style="width:240px">
+                <div>
+                  <input class="fb-input" id="atAdminSearch" placeholder="Search name or tagging…" oninput="renderATAdminTable()" style="width:240px">
+                </div>
                 <button class="btn-primary" onclick="openATEditModal(null)">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Record
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Record
                 </button>
               </div>
               <div class="table-wrap">
                 <table class="data-table">
-                  <thead><tr>
-                    <th style="width:36px">#</th><th>Agent Name</th><th>Shift Date</th>
-                    <th>Shift</th><th class="tc">Onsite/WFH</th><th>Tagging</th>
-                    <th>Reason</th><th class="tc">Plotted</th><th>Remarks</th><th class="tc">Actions</th>
-                  </tr></thead>
+                  <thead>
+                    <tr>
+                      <th style="width:36px">#</th>
+                      <th>Agent Name</th>
+                      <th>Shift Date</th>
+                      <th>Shift</th>
+                      <th class="tc">Onsite/WFH</th>
+                      <th>Tagging</th>
+                      <th>Reason</th>
+                      <th class="tc">Plotted</th>
+                      <th>Remarks</th>
+                      <th class="tc">Actions</th>
+                    </tr>
+                  </thead>
                   <tbody id="atAdminTableBody"></tbody>
                 </table>
               </div>
-            </div>
-          </div>
-        </div>
+            </div><!-- /at-tab-admin -->
+
+          </div><!-- /atDashboardContent -->
+        </div><!-- /page-wrapper -->
       </div><!-- /section-attend -->
+
+
 
       <!-- ════════════════════════════════════
            SLIDE / SWAP SECTION
@@ -1900,7 +1939,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         <th>#</th>
                         <th style="width:32px;text-align:center"><input type="checkbox" id="ssAdminSelectAll" title="Select / deselect all" onchange="ssAdminToggleAll(this.checked)" style="cursor:pointer;accent-color:#1B90FF"/></th>
                         <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('requestorName')">Requestor <span class="th-sort-icon" id="ssath-requestorName">⇅</span></th>
-                        <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('title')">Req # <span class="th-sort-icon" id="ssath-title">⇅</span></th>
                         <th class="th-sortable" onclick="sortSSAdminTable('reqType')">Type <span class="th-sort-icon" id="ssath-reqType">⇅</span></th>
                         <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('status')">Status <span class="th-sort-icon" id="ssath-status">⇅</span></th>
                         <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('shiftDate')">Shift Date <span class="th-sort-icon" id="ssath-shiftDate">⇅</span></th>
@@ -2392,24 +2430,7 @@ async function _ekxInitPage() {
     loadData();
   } catch(e) {
     console.error("EKX init failed:", e);
-    if (errEl) {
-      const msg = e.message || String(e);
-      if (msg.includes("refresh_token_expired") || msg.includes("401")) {
-        const reconnectUrl = (() => {
-          try { return JSON.parse(msg.replace(/^Graph API error \d+: /,"")
-                ).reconnectUrl; } catch(_) { return null; }
-        })() || "https://ekx.cloud.sap/marketplace/rpc/529a6c03-cbf4-459e-94cd-1956011f9cf9/connect?popup=1&returnTo=https%3A%2F%2Fstatic.ekx.cloud.sap";
-        errEl.innerHTML = '<strong>Session expired.</strong> Your Microsoft connection needs to be renewed.'
-          + `<br><br><a href="${reconnectUrl}" target="_blank"
-`          + ' style="display:inline-block;margin-top:4px;background:#1B90FF;color:#FFF;text-decoration:none;'
-          + 'padding:7px 18px;border-radius:4px;font-size:12px;font-weight:600">'
-          + '&#x1F517; Reconnect Microsoft Account</a>'
-          + '<br><small style="opacity:.7;margin-top:6px;display:block">After reconnecting, reload this page.</small>';
-      } else {
-        errEl.textContent = "Could not load your account: " + msg;
-      }
-      errEl.style.display = "block";
-    }
+    if (errEl) { errEl.textContent = "Could not load your account: " + (e.message || e); errEl.style.display = "block"; }
     if (btnMain) { btnMain.disabled = false; btnMain.textContent = "Retry"; }
   }
 }
@@ -3399,6 +3420,9 @@ function viewAllCalendar(){
     return `<tr><td style='color:#CCC;text-align:right'>${i+1}</td><td><strong>${dn}</strong></td><td>${_esc(r.group||'—')}</td><td>${_esc(tl||'—')}</td><td><span style='display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;background:${sc}20;color:${sc};border:1px solid ${sc}60'>${_esc(r.status||'—')}</span></td><td>${_fmtD(r.requestedDate)}</td><td>${_esc(r.leaveType||'—')}</td></tr>`;
   }).join('');
   w.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'/><title>Leave Calendar — ${monthLabel}</title><style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;font-size:13px;color:#1D2329;background:#F5F6F7;}.page-header{background:#00144A;color:#FFF;padding:20px 28px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:6px;}.title{font-size:22px;font-weight:700;margin-bottom:4px;}.meta{font-size:12px;color:rgba(255,255,255,.5);}.btn-print{background:#1B90FF;color:#FFF;border:none;border-radius:5px;padding:8px 18px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;}.btn-print:hover{background:#0070F2;}.table-wrap{padding:20px 24px 32px;overflow-x:auto;}table{width:100%;border-collapse:collapse;background:#FFF;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);}thead tr{background:#00144A;}thead th{color:#FFF;padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}tbody tr{border-bottom:1px solid #F0F2F5;}tbody tr:hover{background:#EBF5FF;}tbody td{padding:9px 14px;vertical-align:middle;word-wrap:break-word;overflow-wrap:break-word;max-width:220px;}@media print{.btn-print{display:none;}body{background:#FFF;}}</style></head><body><div class='page-header'><div><div class='eyebrow'>USD MNL · Leave Management</div><div class='title'>Leave Calendar</div><div class='meta'>${filterDesc} &nbsp;·&nbsp; ${rows.length} record${rows.length!==1?'s':''}</div></div><button class='btn-print' onclick='window.print()'>Print / Save PDF</button></div><div class='table-wrap'><table><thead><tr><th>#</th><th>Name</th><th>Group</th><th>Team Lead</th><th>Status</th><th>Date</th><th>Leave Type</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+<!-- ══════════════════════════════════════════════════════
+     ATTENDANCE TRACKER — Add / Edit Modal
+     ══════════════════════════════════════════════════════ -->
 <div id="atEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;overflow-y:auto;padding:16px" onclick="atModalOverlayClick(event)">
   <div style="background:#FFF;border-radius:10px;width:100%;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.22);overflow:hidden">
     <div style="background:#003459;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
@@ -3409,46 +3433,178 @@ function viewAllCalendar(){
       <button onclick="closeATEditModal()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
     </div>
     <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div style="grid-column:1/-1"><label class="modal-label">Agent Name</label><input class="form-control" id="atfAgent" placeholder="Full name" autocomplete="off"></div>
-      <div><label class="modal-label">Shift Date (CST)</label><input type="date" class="form-control" id="atfDate"></div>
-      <div><label class="modal-label">Shift Type</label>
-        <select class="form-control" id="atfShiftType"><option value="">— select —</option>
-          <option>APA</option><option>MID</option><option>GY1</option><option>GY2</option>
-          <option>GY3</option><option>GY4</option><option>GY5</option><option>WkE</option>
-        </select></div>
-      <div><label class="modal-label">Schedule Time (MNL)</label><input class="form-control" id="atfSchedule" placeholder="e.g. 09:00 PM"></div>
-      <div><label class="modal-label">Actual Time (MNL)</label><input class="form-control" id="atfActual" placeholder="e.g. 09:15 PM"></div>
-      <div><label class="modal-label">Onsite / WFH</label>
-        <select class="form-control" id="atfOnsite"><option value="">— select —</option><option>Onsite</option><option>WFH</option></select></div>
-      <div style="grid-column:1/-1"><label class="modal-label">Tagging</label>
-        <select class="form-control" id="atfTagging"><option value="">— select —</option>
+      <div style="grid-column:1/-1">
+        <label class="modal-label">Agent Name</label>
+        <input class="form-control" id="atfAgent" placeholder="Full name" autocomplete="off">
+      </div>
+      <div>
+        <label class="modal-label">Shift Date (CST)</label>
+        <input type="date" class="form-control" id="atfDate">
+      </div>
+      <div>
+        <label class="modal-label">Shift Type</label>
+        <select class="form-control" id="atfShiftType">
+          <option value="">— select —</option>
+          <option>APA</option><option>MID</option>
+          <option>GY1</option><option>GY2</option><option>GY3</option>
+          <option>GY4</option><option>GY5</option><option>WkE</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Schedule Time (MNL)</label>
+        <input class="form-control" id="atfSchedule" placeholder="e.g. 09:00 PM">
+      </div>
+      <div>
+        <label class="modal-label">Actual Time (MNL)</label>
+        <input class="form-control" id="atfActual" placeholder="e.g. 09:15 PM">
+      </div>
+      <div>
+        <label class="modal-label">Onsite / WFH</label>
+        <select class="form-control" id="atfOnsite">
+          <option value="">— select —</option>
+          <option>Onsite</option><option>WFH</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="modal-label">Tagging</label>
+        <select class="form-control" id="atfTagging">
+          <option value="">— select —</option>
           <option>Absent</option><option>Late</option><option>Under Time</option>
           <optgroup label="Leave Types">
-            <option>Vacation Leave</option><option>Sick Leave</option><option>Medical Leave</option>
-            <option>Single Parent Leave</option><option>Carer's Leave</option>
-            <option>Unpaid Vacation Leave</option><option>Bereavement Leave</option>
-            <option>Marriage Leave</option><option>Concur Care Leave</option>
-            <option>Paternity Leave</option><option>Maternity Leave</option>
-            <option>Sabbatical Leave</option><option>Half Day VL</option>
-            <option>Half Day MedLeave</option><option>Half Day SPL</option>
-            <option>Half Day SL</option><option>Half Day CL</option>
-            <option>Emergency Leave</option><option>Mgt Initiated Leave</option>
-            <option>Domestic Leave</option><option>Learning Leave</option>
-            <option>Half Day Management</option><option>Waived CL</option>
-            <option>Waived Half Day CL</option><option>Family Support Leave</option>
+            <option>Vacation Leave</option><option>Sick Leave</option>
+            <option>Medical Leave</option><option>Single Parent Leave</option>
+            <option>Carer's Leave</option><option>Unpaid Vacation Leave</option>
+            <option>Bereavement Leave</option><option>Marriage Leave</option>
+            <option>Concur Care Leave</option><option>Paternity Leave</option>
+            <option>Maternity Leave</option><option>Sabbatical Leave</option>
+            <option>Half Day VL</option><option>Half Day MedLeave</option>
+            <option>Half Day SPL</option><option>Half Day SL</option>
+            <option>Half Day CL</option><option>Emergency Leave</option>
+            <option>Mgt Initiated Leave</option><option>Domestic Leave</option>
+            <option>Learning Leave</option><option>Half Day Management</option>
+            <option>Waived CL</option><option>Waived Half Day CL</option>
+            <option>Family Support Leave</option>
             <option>Half-Day Learning Leave</option><option>Half Day Unpaid</option>
           </optgroup>
-        </select></div>
-      <div><label class="modal-label">Reason Tag</label>
-        <select class="form-control" id="atfReason"><option value="">— select —</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Reason Tag</label>
+        <select class="form-control" id="atfReason">
+          <option value="">— select —</option>
           <option>Personal/Behavioral</option><option>Medical/Sick</option>
           <option>Internet Issue</option><option>Power Outage</option>
           <option>Tools Issue</option><option>Device Issue</option><option>NA</option>
-        </select></div>
-      <div><label class="modal-label">Plotted?</label>
-        <select class="form-control" id="atfPlotted"><option value="">— select —</option><option>Yes</option><option>No</option></select></div>
-      <div style="grid-column:1/-1"><label class="modal-label">Remarks</label>
-        <textarea class="form-control" id="atfRemarks" rows="2" placeholder="Optional remarks"></textarea></div>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Plotted?</label>
+        <select class="form-control" id="atfPlotted">
+          <option value="">— select —</option>
+          <option>Yes</option><option>No</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="modal-label">Remarks</label>
+        <textarea class="form-control" id="atfRemarks" rows="2" placeholder="Optional remarks"></textarea>
+      </div>
+    </div>
+    <div style="padding:0 24px 20px;display:flex;align-items:center;gap:12px">
+      <button class="btn-primary" id="btnATSave" onclick="saveATRecord()">Save to SharePoint</button>
+      <span id="atModalMsg" style="font-size:12px"></span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ATTENDANCE TRACKER — Add / Edit Modal
+     ══════════════════════════════════════════════════════ -->
+<div id="atEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;overflow-y:auto;padding:16px" onclick="atModalOverlayClick(event)">
+  <div style="background:#FFF;border-radius:10px;width:100%;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.22);overflow:hidden">
+    <div style="background:#003459;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="color:#FFF;font-weight:700;font-size:15px" id="atModalTitle">Add Attendance Record</div>
+        <div style="color:rgba(255,255,255,.55);font-size:12px" id="atModalSubtitle"></div>
+      </div>
+      <button onclick="closeATEditModal()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
+    </div>
+    <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="grid-column:1/-1">
+        <label class="modal-label">Agent Name</label>
+        <input class="form-control" id="atfAgent" placeholder="Full name" autocomplete="off">
+      </div>
+      <div>
+        <label class="modal-label">Shift Date (CST)</label>
+        <input type="date" class="form-control" id="atfDate">
+      </div>
+      <div>
+        <label class="modal-label">Shift Type</label>
+        <select class="form-control" id="atfShiftType">
+          <option value="">— select —</option>
+          <option>APA</option><option>MID</option>
+          <option>GY1</option><option>GY2</option><option>GY3</option>
+          <option>GY4</option><option>GY5</option><option>WkE</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Schedule Time (MNL)</label>
+        <input class="form-control" id="atfSchedule" placeholder="e.g. 09:00 PM">
+      </div>
+      <div>
+        <label class="modal-label">Actual Time (MNL)</label>
+        <input class="form-control" id="atfActual" placeholder="e.g. 09:15 PM">
+      </div>
+      <div>
+        <label class="modal-label">Onsite / WFH</label>
+        <select class="form-control" id="atfOnsite">
+          <option value="">— select —</option>
+          <option>Onsite</option><option>WFH</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="modal-label">Tagging</label>
+        <select class="form-control" id="atfTagging">
+          <option value="">— select —</option>
+          <option>Absent</option><option>Late</option><option>Under Time</option>
+          <optgroup label="Leave Types">
+            <option>Vacation Leave</option><option>Sick Leave</option>
+            <option>Medical Leave</option><option>Single Parent Leave</option>
+            <option>Carer's Leave</option><option>Unpaid Vacation Leave</option>
+            <option>Bereavement Leave</option><option>Marriage Leave</option>
+            <option>Concur Care Leave</option><option>Paternity Leave</option>
+            <option>Maternity Leave</option><option>Sabbatical Leave</option>
+            <option>Half Day VL</option><option>Half Day MedLeave</option>
+            <option>Half Day SPL</option><option>Half Day SL</option>
+            <option>Half Day CL</option><option>Emergency Leave</option>
+            <option>Mgt Initiated Leave</option><option>Domestic Leave</option>
+            <option>Learning Leave</option><option>Half Day Management</option>
+            <option>Waived CL</option><option>Waived Half Day CL</option>
+            <option>Family Support Leave</option>
+            <option>Half-Day Learning Leave</option><option>Half Day Unpaid</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Reason Tag</label>
+        <select class="form-control" id="atfReason">
+          <option value="">— select —</option>
+          <option>Personal/Behavioral</option><option>Medical/Sick</option>
+          <option>Internet Issue</option><option>Power Outage</option>
+          <option>Tools Issue</option><option>Device Issue</option><option>NA</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Plotted?</label>
+        <select class="form-control" id="atfPlotted">
+          <option value="">— select —</option>
+          <option>Yes</option><option>No</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="modal-label">Remarks</label>
+        <textarea class="form-control" id="atfRemarks" rows="2" placeholder="Optional remarks"></textarea>
+      </div>
     </div>
     <div style="padding:0 24px 20px;display:flex;align-items:center;gap:12px">
       <button class="btn-primary" id="btnATSave" onclick="saveATRecord()">Save to SharePoint</button>
@@ -3777,7 +3933,7 @@ function ssRenderTable(){
   tbody.innerHTML=page.map((r,i)=>{
     const idx=allSSData.indexOf(r);
     const editCell=_admin?`<td><button class="btn-edit-record" data-idx="${idx}">Edit</button></td>`:'';
-    return`<tr><td style="color:var(--text-muted)">${start+i+1}</td><td style="font-weight:700;color:var(--sap-blue-dark);white-space:nowrap">${escHtml(r.title||'—')}</td><td style="white-space:nowrap"><strong>${escHtml(r.requestorName||r.title)}</strong></td><td style="white-space:nowrap;font-size:12px;color:var(--sap-blue-dark);font-weight:600">${escHtml(r.title||'—')}</td><td style="white-space:nowrap">${ssReqTypeBadge(r.reqType)}</td><td style="white-space:nowrap">${ssStatusBadge(r.status)}</td><td style="white-space:nowrap">${formatDate(r.shiftDate)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.originalSchedule)}</td><td style="white-space:nowrap">${escHtml(r.originalRD)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.requestedSchedule)}</td><td style="white-space:nowrap">${escHtml(r.requestedRD)}</td><td style="white-space:nowrap"><strong>${escHtml(r.swapName)}</strong></td><td style="white-space:nowrap;font-size:11.5px">${escHtml(fmtSwapAck(r))}</td><td style="white-space:nowrap">${escHtml(r.teamLead)}</td><td style="white-space:nowrap">${plottedBadge(r.plotted)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.reason)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.agentRemarks)}</td>${editCell}</tr>`;
+    return`<tr><td style="color:var(--text-muted)">${start+i+1}</td><td style="font-weight:700;color:var(--sap-blue-dark);white-space:nowrap">${escHtml(r.title||'—')}</td><td style="white-space:nowrap"><strong>${escHtml(r.requestorName||r.title)}</strong></td><td style="white-space:nowrap">${ssReqTypeBadge(r.reqType)}</td><td style="white-space:nowrap">${ssStatusBadge(r.status)}</td><td style="white-space:nowrap">${formatDate(r.shiftDate)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.originalSchedule)}</td><td style="white-space:nowrap">${escHtml(r.originalRD)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.requestedSchedule)}</td><td style="white-space:nowrap">${escHtml(r.requestedRD)}</td><td style="white-space:nowrap"><strong>${escHtml(r.swapName)}</strong></td><td style="white-space:nowrap;font-size:11.5px">${escHtml(fmtSwapAck(r))}</td><td style="white-space:nowrap">${escHtml(r.teamLead)}</td><td style="white-space:nowrap">${plottedBadge(r.plotted)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.reason)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.agentRemarks)}</td>${editCell}</tr>`;
   }).join("");
   tbody.querySelectorAll(".btn-edit-record[data-idx]").forEach(btn=>btn.addEventListener("click",()=>openSSEditModal(+btn.dataset.idx)));
   renderPagination(document.getElementById("ssTablePagination"),ssCurrentPage,total,(p)=>{ssCurrentPage=p;ssRenderTable();const tw=document.querySelector("#ss-tab-records .table-wrap");if(tw)tw.scrollTop=0;});
@@ -4076,11 +4232,10 @@ function openSSApplyModal(){
     const myTL=myRLS.teamLead||"";
     tlEl.innerHTML='<option value="">— Select TL —</option>'+ALLOWED_TLS.map(t=>`<option value="${escHtml(t)}"${t===myTL?' selected':''}>${escHtml(t)}</option>`).join("");
   } else {
-    // Author / WFM: dropdown of ALL roster agents, TL auto-fills on selection
-    nameInput.style.display="none"; nameSelect.style.display="";
-    document.getElementById("arfNameLabel").innerHTML='Apply on Behalf of <span style="color:#CC0000">*</span>';
-    const allMembers=Object.values(rlsData).filter(r=>r.name&&r.role==="agent").sort((a,b)=>(a.name||"").localeCompare(b.name||""));
-    nameSelect.innerHTML='<option value="">— Select Member —</option>'+allMembers.map(r=>`<option value="${escHtml(r.name)}">${escHtml(r.name)}</option>`).join("");
+    // Author / WFM / Manager: editable name, full TL list
+    nameInput.style.display=""; nameSelect.style.display="none";
+    nameInput.readOnly=false; nameInput.value=myName;
+    document.getElementById("arfNameLabel").innerHTML='Requestor Name <span style="color:#CC0000">*</span>';
     tlEl.innerHTML='<option value="">— Select TL —</option>'+ALLOWED_TLS.map(t=>`<option value="${escHtml(t)}">${escHtml(t)}</option>`).join("");
   }
   document.getElementById("arfReqType").value="Slide";
@@ -4487,7 +4642,7 @@ function renderMyAckTable(){
       return ['RTL','STL'].filter(k=>_req[k]&&_a[k]!=='Y'&&_a[k]!=='N');
     })();
     const _canAct=mine||_pendingTLSlots.length>0;
-    const _ackLabel2=mine||(isWFM()&&_pendingTLSlots.length?'All parties (WFM on behalf)':'');
+    const _ackLabel2=mine||(isWFM()&&_pendingTLSlots.length?'TL (on behalf of WFM)':'');
     return`<tr>
       <td style="color:var(--text-muted)">${idx+1}</td>
       <td style="font-weight:700;color:var(--sap-blue-dark);white-space:nowrap">${escHtml(r.title||'—')}</td>
@@ -4516,11 +4671,11 @@ async function ackSwap(idx, approve){
   if(!r._itemId){showToast('Cannot update: no SharePoint item ID.');return;}
   let mine=_mySlots(r);
   let _wfmOnBehalf=false;
-  /* WFM acknowledges ALL pending slots (SP + RTL + STL) on behalf of all parties */
+  /* WFM can acknowledge pending TL slots (RTL / STL) on behalf of the Team Lead */
   if(!mine.length&&isWFM()){
     const _a=_parseAck(r.swapAck),_req=_ackRequired(r);
-    mine=_ACK_SLOTS.filter(k=>_req[k]&&_a[k]!=='Y'&&_a[k]!=='N');
-    if(!mine.length){showToast('All parties are already acknowledged.');return;}
+    mine=['RTL','STL'].filter(k=>_req[k]&&_a[k]!=='Y'&&_a[k]!=='N');
+    if(!mine.length){showToast('All Team Lead slots are already acknowledged.');return;}
     _wfmOnBehalf=true;
   }
   if(!mine.length){showToast('You are not a required acknowledger for this request.');return;}
@@ -4540,7 +4695,7 @@ async function ackSwap(idx, approve){
     mine.forEach(k=>{a[k]='Y';});
     const allDone=_ACK_SLOTS.every(k=>!req[k]||a[k]==='Y');
     newStatus=allDone?'PENDING':'FOR ACKNOWLEDGEMENT';
-    remark=allDone?`All parties acknowledged — pending WFM`:_wfmOnBehalf?`All parties acknowledged by WFM on behalf`:`Approved by ${roleTxt}`;
+    remark=allDone?`All parties acknowledged — pending WFM`:_wfmOnBehalf?`TL slots acknowledged by WFM on behalf — ${roleTxt}`:`Approved by ${roleTxt}`;
   }
   const f={field_2:newStatus, field_9:_ackStr(a)};
   const url=`https://graph.microsoft.com/v1.0/sites/${ssSiteIdCache}/lists/${LIST_SS_ID}/items/${r._itemId}/fields`;
@@ -4552,7 +4707,7 @@ async function ackSwap(idx, approve){
     logSSActivity('Edited', r, newStatus, remark).catch(()=>{});
     if(!approve) showToast((r.reqType||'Request')+' declined.');
     else if(newStatus==='PENDING') showToast('All parties have acknowledged. Now PENDING for approval.');
-    else showToast(_wfmOnBehalf?'All parties acknowledged on behalf by WFM.':'Acknowledged. Awaiting the remaining parties.');
+    else showToast(_wfmOnBehalf?'TL slots acknowledged on behalf by WFM.':'Acknowledged. Awaiting the remaining parties.');
     renderMyAckTable(); ssApplyFilters();
   }catch(e){
     console.error(e);showToast('Update failed: '+(e.message||String(e)));
@@ -4678,7 +4833,7 @@ ${isWFMAck?'<p style="background:#EAF4FF;border-left:4px solid #1B90FF;padding:1
       showToast('Email notification failed ('+res.status+'). Check console for details.');
     } else {
       console.log('[EMAIL] Notification sent:',reqNum,statusLabel);
-      /* Fire Teams PA DMs (non-blocking) */
+      /* Fire Teams DMs via Power Automate (non-blocking) */
       if(_TEAMS_ENABLED){
         const _paPayload=_buildTeamsPayload(rec,statusLabel,isSwapType,typeName,reqNum,shiftDate,!!(opts&&opts.wfmOnBehalf));
         toR.forEach(t=>_sendTeamsNotif(t.emailAddress.address,_paPayload));
@@ -6527,61 +6682,50 @@ const _ms=(()=>{
 
 
 /* ══════════════════════════════════════════════════════
-   TEAMS NOTIFICATIONS VIA POWER AUTOMATE
-   Set _TEAMS_ENABLED=true + paste webhook URL to enable.
+   TEAMS ACTIVITY NOTIFICATION
+   Sends a 1:1 Teams DM alongside every email notification.
+   Requires Chat.Create + ChatMessage.Send permissions on
+   the EKX Microsoft skill (529a6c03-...).
+   Non-fatal — if Teams fails, email already sent.
    ══════════════════════════════════════════════════════ */
-const _TEAMS_ENABLED    = false;   // ← set true after PA flow is configured
-const _PA_TEAMS_WEBHOOK = "";      // ← paste Power Automate HTTP trigger URL
 
-async function _sendTeamsNotif(toEmail, payload){
-  if(!_TEAMS_ENABLED||!_PA_TEAMS_WEBHOOK)return;
-  try{
-    const res=await fetch(_PA_TEAMS_WEBHOOK,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({recipientEmail:toEmail,...payload})
-    });
-    if(res.ok)console.log('[TEAMS] ✅ Queued for',toEmail);
-    else{const tx=await res.text();throw new Error(`PA responded ${res.status}: ${tx.slice(0,200)}`);}
-  }catch(e){
-    console.error('[TEAMS] ❌ Failed for',toEmail,':',e.message);
-    if(isAdmin()||isWFM())showToast('Teams (PA) failed for '+toEmail+': '+e.message.slice(0,100));
-  }
-}
-
-function _buildTeamsPayload(rec,statusLabel,isSwapType,typeName,reqNum,shiftDate,wfmAck){
-  const st=(statusLabel||'').toUpperCase();
-  return{
-    reqType:isSwapType?'Swap':'Slide',typeName,reqNum,status:st,
-    statusLabel:st==='FOR ACKNOWLEDGEMENT'?'For Acknowledgement':st.charAt(0)+st.slice(1).toLowerCase(),
-    shiftDate,requestorName:rec.requestorName||'—',
-    origSchedule:[rec.originalSchedule,rec.originalRD].filter(Boolean).join(' | ')||'—',
-    reqSchedule:[rec.requestedSchedule,rec.requestedRD].filter(Boolean).join(' | ')||'—',
-    swapPartner:rec.swapName||'',
-    swapSchedule:isSwapType?[rec.requestedSchedule,rec.requestedRD].filter(Boolean).join(' | '):'',
-    ackStatus:fmtSwapAck(rec)||'',wfmOnBehalf:!!(wfmAck),
-    reason:rec.agentRemarks||rec.reason||'',teamLead:rec.teamLead||'',
-    toolUrl:'https://static.ekx.cloud.sap/390e03c1-e96c-4551-b09d-396959a04b03/'
-  };
-}
-
-
-/* ══ ATTENDANCE TRACKER — constants ══════════════════════════════════
+/* ══════════════════════════════════════════════════════
+   ATTENDANCE TRACKER — constants
    Site: USD MANILA-USD Manila Attendance Tracker
-   ══════════════════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════ */
 const AT_SITE_ID = "636c1df5-f8aa-413a-af57-5cc4a1806e1d";
 const AT_LIST_ID = "27d726ca-03fc-4978-b025-ca1dcf6d2fde";
+const AT_SP_URL  = "https://sap.sharepoint.com/teams/USDMANILA-USDManilaAttendanceTracker";
+
+/* Column field names */
 const AT_F = {
-  agentName  : "Title",
-  shiftDate  : "ShiftDate_x0028_CST_x0029_",
-  schedule   : "Shift",
-  actualTime : "ShiftTIme_x0028_MNL_x0029_",
-  shiftType  : "ShiftType",
-  onsiteWFH  : "Onsite_x002f_WFH",
-  tagging    : "Tagging",
-  reasonTag  : "ReasonTag",
-  remarks    : "Remarks",
-  plotted    : "Plotted_x003f_",
+  agentName   : "Title",                          // Encoded By (agent display name)
+  shiftDate   : "ShiftDate_x0028_CST_x0029_",     // Shift Date (CST)
+  schedule    : "Shift",                           // Schedule Time (MNL)
+  actualTime  : "ShiftTIme_x0028_MNL_x0029_",     // Actual Time (MNL)
+  shiftType   : "ShiftType",                       // APA/MID/GY1-5/WkE
+  onsiteWFH   : "Onsite_x002f_WFH",               // Onsite / WFH
+  tagging     : "Tagging",                         // Absence tag
+  reasonTag   : "ReasonTag",                       // Reason tag
+  remarks     : "Remarks",                         // Remarks
+  plotted     : "Plotted_x003f_",                  // Plotted?
+  supervisor  : "SupervisorLookupId",              // Supervisor (person lookup)
 };
+
+const AT_SHIFT_TYPES = ["APA","MID","GY1","GY2","GY3","GY4","GY5","WkE"];
+const AT_ONSITE_OPTS = ["Onsite","WFH"];
+const AT_REASON_TAGS = ["Personal/Behavioral","Medical/Sick","Internet Issue",
+  "Power Outage","Tools Issue","Device Issue","NA"];
+const AT_TAGGING_OPTS = [
+  "Absent","Late","Under Time",
+  "Vacation Leave","Sick Leave","Medical Leave","Single Parent Leave",
+  "Carer's Leave","Unpaid Vacation Leave","Bereavement Leave","Marriage Leave",
+  "Concur Care Leave","Paternity Leave","Maternity Leave","Sabbatical Leave",
+  "Half Day VL","Half Day MedLeave","Half Day SPL","Half Day SL","Half Day CL",
+  "Emergency Leave","Mgt Initiated Leave","Domestic Leave","Learning Leave",
+  "Half Day Management","Waived CL","Waived Half Day CL","Family Support Leave",
+  "Half-Day Learning Leave","Half Day Unpaid"
+];
 const AT_TAGGING_LEAVE = new Set([
   "Vacation Leave","Sick Leave","Medical Leave","Single Parent Leave",
   "Carer's Leave","Unpaid Vacation Leave","Bereavement Leave","Marriage Leave",
@@ -6591,7 +6735,80 @@ const AT_TAGGING_LEAVE = new Set([
   "Half Day Management","Waived CL","Waived Half Day CL","Family Support Leave",
   "Half-Day Learning Leave","Half Day Unpaid"
 ]);
-let allATData=[], filteredATData=[], editingATRec=null, atSortCol="shiftDate", atSortDir=-1;
+
+let allATData      = [];
+let filteredATData = [];
+let editingATRec   = null;
+let atSortCol      = "shiftDate";
+let atSortDir      = -1; // descending
+
+
+/* ══════════════════════════════════════════════════════
+   TEAMS NOTIFICATIONS VIA POWER AUTOMATE
+   The app POSTs a JSON payload to a Power Automate HTTP
+   trigger. The flow then sends an Adaptive Card DM to
+   each recipient via the Teams connector.
+
+   No new Graph permissions required.
+   No EKX routes required.
+
+   Setup:
+   1. Create a Power Automate flow (see setup guide).
+   2. Copy the HTTP trigger URL into _PA_TEAMS_WEBHOOK.
+   3. Set _TEAMS_ENABLED = true.
+   ══════════════════════════════════════════════════════ */
+
+const _TEAMS_ENABLED  = false;          // ← set true after PA flow is configured
+const _PA_TEAMS_WEBHOOK = "";           // ← paste your Power Automate HTTP trigger URL here
+
+async function _sendTeamsNotif(toEmail, payload){
+  if(!_TEAMS_ENABLED || !_PA_TEAMS_WEBHOOK){
+    if(_TEAMS_ENABLED) console.warn('[TEAMS] _PA_TEAMS_WEBHOOK not set');
+    return;
+  }
+  try{
+    const body=JSON.stringify({recipientEmail:toEmail,...payload});
+    const res=await fetch(_PA_TEAMS_WEBHOOK,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body
+    });
+    if(res.ok){
+      console.log('[TEAMS] \u2705 Queued for',toEmail);
+    } else {
+      const tx=await res.text();
+      throw new Error(`PA responded ${res.status}: ${tx.slice(0,200)}`);
+    }
+  }catch(e){
+    console.error('[TEAMS] \u274C Failed for',toEmail,':',e.message);
+    if(isAdmin()||isWFM()) showToast('Teams (PA) failed for '+toEmail+': '+e.message.slice(0,100));
+  }
+}
+
+/* Build the JSON payload sent to Power Automate */
+function _buildTeamsPayload(rec, statusLabel, isSwapType, typeName, reqNum, shiftDate, wfmAck){
+  const st=statusLabel.toUpperCase();
+  return {
+    reqType      : isSwapType?'Swap':'Slide',
+    typeName,
+    reqNum,
+    status       : st,
+    statusLabel  : st==='FOR ACKNOWLEDGEMENT'?'For Acknowledgement':st.charAt(0)+st.slice(1).toLowerCase(),
+    shiftDate,
+    requestorName: rec.requestorName||'—',
+    origSchedule : [rec.originalSchedule,rec.originalRD].filter(Boolean).join(' | ')||'—',
+    reqSchedule  : [rec.requestedSchedule,rec.requestedRD].filter(Boolean).join(' | ')||'—',
+    swapPartner  : rec.swapName||'',
+    swapSchedule : isSwapType?[rec.requestedSchedule,rec.requestedRD].filter(Boolean).join(' | '):'' ,
+    ackStatus    : fmtSwapAck(rec)||'',
+    wfmOnBehalf  : !!(wfmAck),
+    reason       : rec.agentRemarks||rec.reason||'',
+    teamLead     : rec.teamLead||'',
+    toolUrl      : 'https://static.ekx.cloud.sap/390e03c1-e96c-4551-b09d-396959a04b03/'
+  };
+}
+
+
 
 /* ══════════════════════════════════════════════════
    MOBILE NAV TOGGLE
@@ -6643,133 +6860,213 @@ function closeMobNav(){
   });
 })();
 
-/* ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════════
    ATTENDANCE TRACKER — JavaScript
-   ═══════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════════ */
 
-function atTaggingBadge(tag){
-  if(!tag)return'<span style="color:#999">—</span>';
-  let bg="#EAECEE",fg="#333";const t=(tag||"").toLowerCase();
-  if(t==="absent"){bg="#FFF0F0";fg="#CC0000";}
-  else if(t==="late"){bg="#FFF8E6";fg="#B45309";}
-  else if(t==="under time"){bg="#FFF3CD";fg="#856404";}
-  else if(AT_TAGGING_LEAVE.has(tag)){bg="#E8F5E9";fg="#1B5E20";}
-  return`<span style="background:${bg};color:${fg};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap">${escHtml(tag)}</span>`;
+/* ── Badge helpers ─────────────────────────────────────────────────────── */
+function atTaggingBadge(tag) {
+  if (!tag) return '<span style="color:#999">—</span>';
+  let bg = "#EAECEE", fg = "#333";
+  const t = tag.toLowerCase();
+  if (t === "absent")            { bg="#FFF0F0"; fg="#CC0000"; }
+  else if (t === "late")         { bg="#FFF8E6"; fg="#B45309"; }
+  else if (t === "under time")   { bg="#FFF3CD"; fg="#856404"; }
+  else if (AT_TAGGING_LEAVE.has(tag)) { bg="#E8F5E9"; fg="#1B5E20"; }
+  return `<span style="background:${bg};color:${fg};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap">${escHtml(tag)}</span>`;
 }
-function atOnsiteBadge(v){
-  if(!v)return'<span style="color:#999">—</span>';
-  const wfh=(v||"").toUpperCase()==="WFH";
-  return`<span style="background:${wfh?"#E8F0FF":"#E8F5E9"};color:${wfh?"#0057C2":"#1B5E20"};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">${escHtml(v)}</span>`;
+function atOnsiteBadge(v) {
+  if (!v) return '<span style="color:#999">—</span>';
+  const wfh = v.toUpperCase() === "WFH";
+  return `<span style="background:${wfh?"#E8F0FF":"#E8F5E9"};color:${wfh?"#0057C2":"#1B5E20"};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">${escHtml(v)}</span>`;
 }
-function atPlottedBadge(v){
-  const yes=String(v||"").toLowerCase()==="yes";
-  if(!v)return'<span style="color:#999">—</span>';
-  return`<span style="background:${yes?"#E8F5E9":"#EAECEE"};color:${yes?"#1B5E20":"#666"};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">${yes?"Yes":"No"}</span>`;
+function atPlottedBadge(v) {
+  const yes = String(v||"").toLowerCase() === "yes";
+  if (!v) return '<span style="color:#999">—</span>';
+  return `<span style="background:${yes?"#E8F5E9":"#EAECEE"};color:${yes?"#1B5E20":"#666"};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">${yes?"Yes":"No"}</span>`;
 }
-function atShiftBadge(v){
-  if(!v)return'<span style="color:#999">—</span>';
-  const m={APA:"#E8F0FF:#0057C2",MID:"#FFF3E0:#E65100",GY1:"#EDE7F6:#4527A0",GY2:"#EDE7F6:#4527A0",GY3:"#EDE7F6:#5E35B1",GY4:"#EDE7F6:#512DA8",GY5:"#EDE7F6:#4527A0",WkE:"#E8F5E9:#1B5E20"};
-  const[bg,fg]=(m[v]||"#F5F6F7:#333").split(":");
-  return`<span style="background:${bg};color:${fg};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">${escHtml(v)}</span>`;
+function atShiftBadge(v) {
+  if (!v) return '<span style="color:#999">—</span>';
+  const colors = {APA:"#E8F0FF:#0057C2", MID:"#FFF3E0:#E65100",
+    GY1:"#EDE7F6:#4527A0", GY2:"#EDE7F6:#4527A0", GY3:"#EDE7F6:#5E35B1",
+    GY4:"#EDE7F6:#512DA8", GY5:"#EDE7F6:#4527A0", WkE:"#E8F5E9:#1B5E20"};
+  const [bg, fg] = (colors[v] || "#F5F6F7:#333").split(":");
+  return `<span style="background:${bg};color:${fg};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600">${escHtml(v)}</span>`;
 }
-function atMapItem(item){
-  const f=item.fields||item;
-  return{
-    _itemId:item.id||f.id||"",
-    agentName:f[AT_F.agentName]||"",shiftDate:f[AT_F.shiftDate]||"",
-    schedule:f[AT_F.schedule]||"",actualTime:f[AT_F.actualTime]||"",
-    shiftType:f[AT_F.shiftType]||"",onsiteWFH:f[AT_F.onsiteWFH]||"",
-    tagging:f[AT_F.tagging]||"",reasonTag:f[AT_F.reasonTag]||"",
-    remarks:f[AT_F.remarks]||"",plotted:f[AT_F.plotted]||"",
+
+/* ── Map raw SP item fields to a clean JS object ───────────────────────── */
+function atMapItem(item) {
+  const f = item.fields || item;
+  return {
+    _itemId     : item.id || f.id || "",
+    agentName   : f[AT_F.agentName]   || "",
+    shiftDate   : f[AT_F.shiftDate]   || "",
+    schedule    : f[AT_F.schedule]    || "",
+    actualTime  : f[AT_F.actualTime]  || "",
+    shiftType   : f[AT_F.shiftType]   || "",
+    onsiteWFH   : f[AT_F.onsiteWFH]   || "",
+    tagging     : f[AT_F.tagging]     || "",
+    reasonTag   : f[AT_F.reasonTag]   || "",
+    remarks     : f[AT_F.remarks]     || "",
+    plotted     : f[AT_F.plotted]     || "",
+    supervisor  : f[AT_F.supervisor]  || "",
   };
 }
-async function loadAttendData(){
-  document.getElementById("atLoadingState").style.display="block";
-  document.getElementById("atDashboardContent").style.display="none";
-  document.getElementById("atErrorState").style.display="none";
-  allATData=[];
-  try{
-    let url=`https://graph.microsoft.com/v1.0/sites/${AT_SITE_ID}/lists/${AT_LIST_ID}/items?$expand=fields&$top=500`;
-    let pages=0;
-    while(url&&pages<20){
-      const res=await graphGet(url);
-      (res.value||[]).forEach(item=>allATData.push(atMapItem(item)));
-      url=res["@odata.nextLink"]||null;pages++;
+
+/* ── Load all attendance records (paginated) ────────────────────────────── */
+async function loadAttendData() {
+  document.getElementById("atLoadingState").style.display = "block";
+  document.getElementById("atDashboardContent").style.display = "none";
+  document.getElementById("atErrorState").style.display = "none";
+  allATData = [];
+
+  try {
+    let url = `https://graph.microsoft.com/v1.0/sites/${AT_SITE_ID}/lists/${AT_LIST_ID}/items?$expand=fields&$top=500`;
+    let pages = 0;
+    while (url && pages < 20) {
+      const res = await graphGet(url);
+      (res.value || []).forEach(item => allATData.push(atMapItem(item)));
+      url = res["@odata.nextLink"] || null;
+      pages++;
     }
-    renderATTable();renderATAdminTable();
-    document.getElementById("atLoadingState").style.display="none";
-    document.getElementById("atDashboardContent").style.display="block";
-    const isWfm=isWFM()||isAdmin();
-    document.getElementById("btn-at-tab-admin").style.display=isWfm?"":"none";
-    document.getElementById("btnATAdd").style.display=isWfm?"":"none";
-    document.getElementById("snav-navsub-at-admin").style.display=isWfm?"":"none";
-  }catch(e){
-    document.getElementById("atLoadingState").style.display="none";
-    document.getElementById("atErrorState").style.display="block";
-    document.getElementById("atErrorMsg").textContent="Failed to load: "+e.message;
+    renderATTable();
+    renderATAdminTable();
+    updateATKPIs();
+    document.getElementById("atLoadingState").style.display = "none";
+    document.getElementById("atDashboardContent").style.display = "block";
+    /* Show Admin tab + Add button for WFM */
+    const isWfm = isWFM() || isAdmin();
+    document.getElementById("btn-at-tab-admin").style.display = isWfm ? "" : "none";
+    document.getElementById("btnATAdd").style.display = isWfm ? "" : "none";
+    document.getElementById("snav-navsub-at-admin").style.display = isWfm ? "" : "none";
+  } catch(e) {
+    document.getElementById("atLoadingState").style.display = "none";
+    document.getElementById("atErrorState").style.display = "block";
+    document.getElementById("atErrorMsg").textContent = "Failed to load: " + e.message;
   }
 }
-function sortATTable(col){
-  if(atSortCol===col){atSortDir*=-1;}else{atSortCol=col;atSortDir=1;}
-  document.querySelectorAll(".th-sort-icon[id^='ath-']").forEach(el=>el.textContent="⇅");
-  const ic=document.getElementById("ath-"+col);if(ic)ic.textContent=atSortDir===1?"▲":"▼";
+
+/* ── KPI strip ─────────────────────────────────────────────────────────── */
+function updateATKPIs(data) {
+  const src = data || allATData;
+  let absent=0, late=0, leave=0, wfh=0, plotted=0;
+  src.forEach(r => {
+    const tl = (r.tagging || "").toLowerCase();
+    if (tl === "absent") absent++;
+    else if (tl === "late" || tl === "under time") late++;
+    else if (AT_TAGGING_LEAVE.has(r.tagging)) leave++;
+    if ((r.onsiteWFH || "").toUpperCase() === "WFH") wfh++;
+    if ((r.plotted || "").toLowerCase() === "yes") plotted++;
+  });
+  document.getElementById("atKpiTotal").textContent   = src.length;
+  document.getElementById("atKpiAbsent").textContent  = absent;
+  document.getElementById("atKpiLate").textContent    = late;
+  document.getElementById("atKpiLeave").textContent   = leave;
+  document.getElementById("atKpiWFH").textContent     = wfh;
+  document.getElementById("atKpiPlotted").textContent = plotted;
+}
+
+/* ── Sort ───────────────────────────────────────────────────────────────── */
+function sortATTable(col) {
+  if (atSortCol === col) { atSortDir *= -1; } else { atSortCol = col; atSortDir = 1; }
+  document.querySelectorAll(".th-sort-icon[id^='ath-']").forEach(el => el.textContent = "⇅");
+  const ic = document.getElementById("ath-" + col);
+  if (ic) ic.textContent = atSortDir === 1 ? "▲" : "▼";
   renderATTable();
 }
-function clearATFilters(){
-  ["atFilterName","atFilterFrom","atFilterTo","atFilterShift","atFilterTagging","atFilterOnsite","atFilterPlotted"]
-    .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+
+/* ── Filter helpers ─────────────────────────────────────────────────────── */
+function clearATFilters() {
+  ["atFilterName","atFilterFrom","atFilterTo","atFilterShift",
+   "atFilterTagging","atFilterOnsite","atFilterPlotted"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
   renderATTable();
 }
-function renderATTable(){
-  const tbody=document.getElementById("atTableBody");if(!tbody)return;
-  const name=(document.getElementById("atFilterName")?.value||"").toLowerCase().trim();
-  const dateFrom=document.getElementById("atFilterFrom")?.value||"";
-  const dateTo=document.getElementById("atFilterTo")?.value||"";
-  const shift=document.getElementById("atFilterShift")?.value||"";
-  const tagging=document.getElementById("atFilterTagging")?.value||"";
-  const onsite=document.getElementById("atFilterOnsite")?.value||"";
-  const plotted=document.getElementById("atFilterPlotted")?.value||"";
-  let rows=allATData.filter(r=>{
-    if(name&&!r.agentName.toLowerCase().includes(name))return false;
-    if(dateFrom&&r.shiftDate&&r.shiftDate<dateFrom+"T00:00:00Z")return false;
-    if(dateTo&&r.shiftDate&&r.shiftDate>dateTo+"T23:59:59Z")return false;
-    if(shift&&r.shiftType!==shift)return false;
-    if(tagging){
-      if(tagging==="_absent"&&r.tagging!=="Absent")return false;
-      else if(tagging==="_late"&&r.tagging!=="Late"&&r.tagging!=="Under Time")return false;
-      else if(tagging==="_leave"&&!AT_TAGGING_LEAVE.has(r.tagging))return false;
-      else if(!["_absent","_late","_leave"].includes(tagging)&&r.tagging!==tagging)return false;
+
+/* ── Render Records table ───────────────────────────────────────────────── */
+function renderATTable() {
+  const tbody = document.getElementById("atTableBody"); if (!tbody) return;
+
+  const name    = (document.getElementById("atFilterName")?.value  || "").toLowerCase().trim();
+  const dateFrom= document.getElementById("atFilterFrom")?.value   || "";
+  const dateTo  = document.getElementById("atFilterTo")?.value     || "";
+  const shift   = document.getElementById("atFilterShift")?.value  || "";
+  const tagging = document.getElementById("atFilterTagging")?.value|| "";
+  const onsite  = document.getElementById("atFilterOnsite")?.value || "";
+  const plotted = document.getElementById("atFilterPlotted")?.value|| "";
+
+  /* Role-based filtering */
+  let rows = allATData.filter(r => {
+    if (!isWFM() && !isAdmin()) {
+      /* Agents see only their own records (by display name match) */
+      if (!isTL()) {
+        const uname = (currentUserName || currentUserEmail || "").toLowerCase();
+        if (!r.agentName.toLowerCase().includes(uname.split(" ")[0])) return false;
+      }
+      /* TLs see records where agent name is in their team — no filtering here; all visible */
     }
-    if(onsite&&r.onsiteWFH!==onsite)return false;
-    if(plotted&&r.plotted!==plotted)return false;
+    if (name   && !r.agentName.toLowerCase().includes(name)) return false;
+    if (dateFrom && r.shiftDate && r.shiftDate < dateFrom + "T00:00:00Z") return false;
+    if (dateTo   && r.shiftDate && r.shiftDate > dateTo   + "T23:59:59Z") return false;
+    if (shift   && r.shiftType !== shift) return false;
+    if (tagging) {
+      if (tagging === "_absent" && r.tagging !== "Absent") return false;
+      else if (tagging === "_late" && r.tagging !== "Late" && r.tagging !== "Under Time") return false;
+      else if (tagging === "_leave" && !AT_TAGGING_LEAVE.has(r.tagging)) return false;
+      else if (!["_absent","_late","_leave"].includes(tagging) && r.tagging !== tagging) return false;
+    }
+    if (onsite  && r.onsiteWFH !== onsite) return false;
+    if (plotted && r.plotted !== plotted) return false;
     return true;
   });
-  rows.sort((a,b)=>{let av=a[atSortCol]||"",bv=b[atSortCol]||"";return av<bv?-atSortDir:av>bv?atSortDir:0;});
-  filteredATData=rows;
-  const cnt=document.getElementById("atRecordCount");
-  if(cnt)cnt.textContent=`Showing ${rows.length} of ${allATData.length} records`;
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="11" class="empty-state"><p>No records match the current filters.</p></td></tr>`;return;}
-  tbody.innerHTML=rows.map((r,i)=>`<tr>
-    <td style="color:var(--text-muted)">${i+1}</td>
+
+  /* Sort */
+  rows.sort((a, b) => {
+    let av = a[atSortCol] || "", bv = b[atSortCol] || "";
+    return av < bv ? -atSortDir : av > bv ? atSortDir : 0;
+  });
+
+  filteredATData = rows;
+  updateATKPIs(rows);
+
+  const cnt = document.getElementById("atRecordCount");
+  if (cnt) cnt.textContent = `Showing ${rows.length} of ${allATData.length} records`;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-state"><p>No records match the current filters.</p></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => `<tr>
+    <td style="color:var(--text-muted)">${i + 1}</td>
     <td><strong>${escHtml(r.agentName)}</strong></td>
     <td style="white-space:nowrap">${escHtml(formatDatePlain(r.shiftDate))}</td>
-    <td style="white-space:nowrap">${escHtml(r.schedule)||'<span style="color:#999">—</span>'}</td>
-    <td style="white-space:nowrap">${escHtml(r.actualTime)||'<span style="color:#999">—</span>'}</td>
+    <td style="white-space:nowrap">${escHtml(r.schedule) || '<span style="color:#999">—</span>'}</td>
+    <td style="white-space:nowrap">${escHtml(r.actualTime) || '<span style="color:#999">—</span>'}</td>
     <td class="tc">${atShiftBadge(r.shiftType)}</td>
     <td class="tc">${atOnsiteBadge(r.onsiteWFH)}</td>
     <td>${atTaggingBadge(r.tagging)}</td>
-    <td style="font-size:12px">${escHtml(r.reasonTag)||'<span style="color:#999">—</span>'}</td>
+    <td style="font-size:12px">${escHtml(r.reasonTag) || '<span style="color:#999">—</span>'}</td>
     <td class="tc">${atPlottedBadge(r.plotted)}</td>
-    <td style="font-size:12px;max-width:180px;word-break:break-word">${escHtml(r.remarks)||'<span style="color:#999">—</span>'}</td>
+    <td style="font-size:12px;max-width:180px;word-break:break-word">${escHtml(r.remarks) || '<span style="color:#999">—</span>'}</td>
   </tr>`).join("");
 }
-function renderATAdminTable(){
-  const tbody=document.getElementById("atAdminTableBody");if(!tbody)return;
-  const q=(document.getElementById("atAdminSearch")?.value||"").toLowerCase().trim();
-  const rows=allATData.filter(r=>!q||r.agentName.toLowerCase().includes(q)||(r.tagging||"").toLowerCase().includes(q)||(r.shiftType||"").toLowerCase().includes(q));
-  if(!rows.length){tbody.innerHTML=`<tr><td colspan="10" class="empty-state"><p>No records.</p></td></tr>`;return;}
-  tbody.innerHTML=rows.map((r,i)=>`<tr>
-    <td style="color:var(--text-muted)">${i+1}</td>
+
+/* ── Render Admin table ─────────────────────────────────────────────────── */
+function renderATAdminTable() {
+  const tbody = document.getElementById("atAdminTableBody"); if (!tbody) return;
+  const q = (document.getElementById("atAdminSearch")?.value || "").toLowerCase().trim();
+  const rows = allATData.filter(r =>
+    !q || r.agentName.toLowerCase().includes(q) || (r.tagging||"").toLowerCase().includes(q) ||
+    (r.shiftType||"").toLowerCase().includes(q) || (r.remarks||"").toLowerCase().includes(q)
+  );
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-state"><p>No records.</p></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map((r, i) => `<tr>
+    <td style="color:var(--text-muted)">${i + 1}</td>
     <td><strong>${escHtml(r.agentName)}</strong></td>
     <td style="white-space:nowrap">${escHtml(formatDatePlain(r.shiftDate))}</td>
     <td class="tc">${atShiftBadge(r.shiftType)}</td>
@@ -6779,99 +7076,139 @@ function renderATAdminTable(){
     <td class="tc">${atPlottedBadge(r.plotted)}</td>
     <td style="font-size:12px;max-width:160px;word-break:break-word">${escHtml(r.remarks)||'<span style="color:#999">—</span>'}</td>
     <td class="tc" style="white-space:nowrap">
-      <button class="btn-edit-record" data-atidx="${i}" style="padding:4px 10px;font-size:11px">Edit</button>
-      <button class="btn-edit-record" data-atdel="${i}" style="padding:4px 10px;font-size:11px;background:#CC0000;margin-left:4px">Del</button>
+      <button class="btn-edit-record" data-atidx="${i}" title="Edit"
+        style="padding:4px 10px;font-size:11px">Edit</button>
+      <button class="btn-edit-record" data-atdel="${i}" title="Delete"
+        style="padding:4px 10px;font-size:11px;background:#CC0000;margin-left:4px">Del</button>
     </td>
   </tr>`).join("");
-  tbody.querySelectorAll("[data-atidx]").forEach(btn=>btn.addEventListener("click",()=>openATEditModal(rows[+btn.dataset.atidx])));
-  tbody.querySelectorAll("[data-atdel]").forEach(btn=>btn.addEventListener("click",()=>deleteATRecord(rows[+btn.dataset.atdel])));
+
+  /* Wire edit / delete buttons */
+  const _rows = rows;
+  tbody.querySelectorAll("[data-atidx]").forEach(btn =>
+    btn.addEventListener("click", () => openATEditModal(_rows[+btn.dataset.atidx]))
+  );
+  tbody.querySelectorAll("[data-atdel]").forEach(btn =>
+    btn.addEventListener("click", () => deleteATRecord(_rows[+btn.dataset.atdel]))
+  );
 }
-function atSwitchTab(id,btn){
-  document.querySelectorAll("#atDashboardContent .tab-pane").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll("#atDashboardContent .tab-btn").forEach(b=>b.classList.remove("active"));
-  const pane=document.getElementById(id);if(pane)pane.classList.add("active");
-  const tabBtn=document.getElementById("btn-"+id);if(tabBtn)tabBtn.classList.add("active");
-  if(btn)btn.classList.add("active");
-  document.querySelectorAll("#snav-sub-attend .snav-sub-item").forEach(x=>x.classList.remove("active"));
-  const ns=document.getElementById("snav-navsub-"+id);if(ns)ns.classList.add("active");
-  if(id==="at-tab-admin")renderATAdminTable();
+
+/* ── Tab switch ─────────────────────────────────────────────────────────── */
+function atSwitchTab(id, btn) {
+  document.querySelectorAll("#atDashboardContent .tab-pane").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll("#atDashboardContent .tab-btn").forEach(b => b.classList.remove("active"));
+  const pane = document.getElementById(id); if (pane) pane.classList.add("active");
+  const tabBtn = document.getElementById("btn-" + id); if (tabBtn) tabBtn.classList.add("active");
+  if (btn) btn.classList.add("active");
+  document.querySelectorAll("#snav-sub-attend .snav-sub-item").forEach(x => x.classList.remove("active"));
+  const ns = document.getElementById("snav-navsub-" + id); if (ns) ns.classList.add("active");
+  if (id === "at-tab-admin") renderATAdminTable();
 }
-function openATEditModal(rec){
-  if(!isWFM()&&!isAdmin()){showToast("Access denied: WFM only.");return;}
-  editingATRec=rec||null;
-  document.getElementById("atModalTitle").textContent=rec?"Edit Attendance Record":"Add Attendance Record";
-  document.getElementById("atModalSubtitle").textContent=rec?(rec.agentName+(rec._itemId?"  ·  ID: "+rec._itemId:"")):"";
-  document.getElementById("atfAgent").value=rec?.agentName||"";
-  document.getElementById("atfDate").value=rec?.shiftDate?rec.shiftDate.slice(0,10):"";
-  document.getElementById("atfShiftType").value=rec?.shiftType||"";
-  document.getElementById("atfSchedule").value=rec?.schedule||"";
-  document.getElementById("atfActual").value=rec?.actualTime||"";
-  document.getElementById("atfOnsite").value=rec?.onsiteWFH||"";
-  document.getElementById("atfTagging").value=rec?.tagging||"";
-  document.getElementById("atfReason").value=rec?.reasonTag||"";
-  document.getElementById("atfPlotted").value=rec?.plotted||"";
-  document.getElementById("atfRemarks").value=rec?.remarks||"";
-  document.getElementById("atModalMsg").textContent="";
-  document.getElementById("btnATSave").disabled=false;
-  document.getElementById("atEditModal").style.display="flex";
+
+/* ── Open Edit/Add Modal ────────────────────────────────────────────────── */
+function openATEditModal(rec) {
+  if (!isWFM() && !isAdmin()) { showToast("Access denied: WFM only."); return; }
+  editingATRec = rec || null;
+  document.getElementById("atModalTitle").textContent    = rec ? "Edit Attendance Record" : "Add Attendance Record";
+  document.getElementById("atModalSubtitle").textContent = rec ? (rec.agentName + (rec._itemId ? "  ·  ID: " + rec._itemId : "")) : "";
+  document.getElementById("atfAgent").value    = rec?.agentName  || "";
+  document.getElementById("atfDate").value     = rec?.shiftDate  ? rec.shiftDate.slice(0,10) : "";
+  document.getElementById("atfShiftType").value= rec?.shiftType  || "";
+  document.getElementById("atfSchedule").value = rec?.schedule   || "";
+  document.getElementById("atfActual").value   = rec?.actualTime || "";
+  document.getElementById("atfOnsite").value   = rec?.onsiteWFH  || "";
+  document.getElementById("atfTagging").value  = rec?.tagging    || "";
+  document.getElementById("atfReason").value   = rec?.reasonTag  || "";
+  document.getElementById("atfPlotted").value  = rec?.plotted    || "";
+  document.getElementById("atfRemarks").value  = rec?.remarks    || "";
+  document.getElementById("atModalMsg").textContent = "";
+  document.getElementById("btnATSave").disabled = false;
+  document.getElementById("atEditModal").style.display = "flex";
 }
-function closeATEditModal(){document.getElementById("atEditModal").style.display="none";editingATRec=null;}
-function atModalOverlayClick(e){if(e.target.id==="atEditModal")closeATEditModal();}
-async function saveATRecord(){
-  if(!isWFM()&&!isAdmin()){showToast("Access denied.");return;}
-  const btn=document.getElementById("btnATSave"),msg=document.getElementById("atModalMsg");
-  btn.disabled=true;msg.textContent="Saving…";msg.style.color="var(--sap-navy)";
-  const agentName=document.getElementById("atfAgent").value.trim();
-  const dateVal=document.getElementById("atfDate").value;
-  if(!agentName){msg.textContent="Agent name required.";msg.style.color="#CC0000";btn.disabled=false;return;}
-  if(!dateVal){msg.textContent="Shift date required.";msg.style.color="#CC0000";btn.disabled=false;return;}
-  const fields={
-    [AT_F.agentName]:agentName,[AT_F.shiftDate]:dateVal+"T00:00:00Z",
-    [AT_F.shiftType]:document.getElementById("atfShiftType").value,
-    [AT_F.schedule]:document.getElementById("atfSchedule").value.trim(),
-    [AT_F.actualTime]:document.getElementById("atfActual").value.trim(),
-    [AT_F.onsiteWFH]:document.getElementById("atfOnsite").value,
-    [AT_F.tagging]:document.getElementById("atfTagging").value,
-    [AT_F.reasonTag]:document.getElementById("atfReason").value,
-    [AT_F.plotted]:document.getElementById("atfPlotted").value,
-    [AT_F.remarks]:document.getElementById("atfRemarks").value.trim(),
+function closeATEditModal() {
+  document.getElementById("atEditModal").style.display = "none";
+  editingATRec = null;
+}
+function atModalOverlayClick(e) { if (e.target.id === "atEditModal") closeATEditModal(); }
+
+/* ── Save (add or update) ───────────────────────────────────────────────── */
+async function saveATRecord() {
+  if (!isWFM() && !isAdmin()) { showToast("Access denied."); return; }
+  const btn = document.getElementById("btnATSave");
+  const msg = document.getElementById("atModalMsg");
+  btn.disabled = true; msg.textContent = "Saving…"; msg.style.color = "var(--sap-navy)";
+
+  const agentName = document.getElementById("atfAgent").value.trim();
+  const dateVal   = document.getElementById("atfDate").value;
+  if (!agentName)  { msg.textContent = "Agent name is required."; msg.style.color="#CC0000"; btn.disabled=false; return; }
+  if (!dateVal)    { msg.textContent = "Shift date is required."; msg.style.color="#CC0000"; btn.disabled=false; return; }
+
+  const fields = {
+    [AT_F.agentName]  : agentName,
+    [AT_F.shiftDate]  : dateVal + "T00:00:00Z",
+    [AT_F.shiftType]  : document.getElementById("atfShiftType").value,
+    [AT_F.schedule]   : document.getElementById("atfSchedule").value.trim(),
+    [AT_F.actualTime] : document.getElementById("atfActual").value.trim(),
+    [AT_F.onsiteWFH]  : document.getElementById("atfOnsite").value,
+    [AT_F.tagging]    : document.getElementById("atfTagging").value,
+    [AT_F.reasonTag]  : document.getElementById("atfReason").value,
+    [AT_F.plotted]    : document.getElementById("atfPlotted").value,
+    [AT_F.remarks]    : document.getElementById("atfRemarks").value.trim(),
   };
-  Object.keys(fields).forEach(k=>{if(fields[k]==="")delete fields[k];});
-  try{
-    const base=`https://graph.microsoft.com/v1.0/sites/${AT_SITE_ID}/lists/${AT_LIST_ID}`;
-    if(editingATRec?._itemId){
-      await graphPatch(`${base}/items/${editingATRec._itemId}/fields`,fields);
-      Object.assign(editingATRec,{agentName,shiftDate:dateVal+"T00:00:00Z",
-        shiftType:fields[AT_F.shiftType]||editingATRec.shiftType,
-        schedule:fields[AT_F.schedule]||editingATRec.schedule,
-        actualTime:fields[AT_F.actualTime]||editingATRec.actualTime,
-        onsiteWFH:fields[AT_F.onsiteWFH]||editingATRec.onsiteWFH,
-        tagging:fields[AT_F.tagging]||editingATRec.tagging,
-        reasonTag:fields[AT_F.reasonTag]||editingATRec.reasonTag,
-        plotted:fields[AT_F.plotted]||editingATRec.plotted,
-        remarks:fields[AT_F.remarks]||editingATRec.remarks});
-      showToast("Record updated.");
-    }else{
-      const res=await graphPost(`${base}/items`,{fields});
+  // Remove empty strings to avoid overwriting with blanks on PATCH
+  Object.keys(fields).forEach(k => { if (fields[k] === "") delete fields[k]; });
+
+  try {
+    const base = `https://graph.microsoft.com/v1.0/sites/${AT_SITE_ID}/lists/${AT_LIST_ID}`;
+    if (editingATRec?._itemId) {
+      /* UPDATE */
+      await graphPatch(`${base}/items/${editingATRec._itemId}/fields`, fields);
+      Object.assign(editingATRec, {
+        agentName: agentName, shiftDate: dateVal + "T00:00:00Z",
+        shiftType: fields[AT_F.shiftType]||editingATRec.shiftType,
+        schedule: fields[AT_F.schedule]||editingATRec.schedule,
+        actualTime: fields[AT_F.actualTime]||editingATRec.actualTime,
+        onsiteWFH: fields[AT_F.onsiteWFH]||editingATRec.onsiteWFH,
+        tagging: fields[AT_F.tagging]||editingATRec.tagging,
+        reasonTag: fields[AT_F.reasonTag]||editingATRec.reasonTag,
+        plotted: fields[AT_F.plotted]||editingATRec.plotted,
+        remarks: fields[AT_F.remarks]||editingATRec.remarks,
+      });
+      showToast("Attendance record updated.");
+    } else {
+      /* CREATE */
+      const res = await graphPost(`${base}/items`, { fields });
       allATData.unshift(atMapItem(res));
-      showToast("Record added.");
+      showToast("Attendance record added.");
     }
-    renderATTable();renderATAdminTable();
-    msg.textContent="Saved!";msg.style.color="#1B7A3A";btn.disabled=false;
-    setTimeout(closeATEditModal,1200);
-  }catch(e){msg.textContent="Save failed: "+e.message.slice(0,120);msg.style.color="#CC0000";btn.disabled=false;}
+    renderATTable();
+    renderATAdminTable();
+    updateATKPIs();
+    msg.textContent = "Saved!"; msg.style.color = "#1B7A3A";
+    btn.disabled = false;
+    setTimeout(closeATEditModal, 1200);
+  } catch(e) {
+    msg.textContent = "Save failed: " + e.message.slice(0, 120);
+    msg.style.color = "#CC0000"; btn.disabled = false;
+  }
 }
-async function deleteATRecord(rec){
-  if(!isWFM()&&!isAdmin()){showToast("Access denied.");return;}
-  if(!rec?._itemId){showToast("No item ID.");return;}
-  if(!confirm(`Delete record for ${rec.agentName} on ${formatDatePlain(rec.shiftDate)}?`))return;
-  try{
+
+/* ── Delete ─────────────────────────────────────────────────────────────── */
+async function deleteATRecord(rec) {
+  if (!isWFM() && !isAdmin()) { showToast("Access denied."); return; }
+  if (!rec?._itemId) { showToast("No item ID — cannot delete."); return; }
+  if (!confirm(`Delete attendance record for ${rec.agentName} on ${formatDatePlain(rec.shiftDate)}?`)) return;
+  try {
     await graphDelete(`https://graph.microsoft.com/v1.0/sites/${AT_SITE_ID}/lists/${AT_LIST_ID}/items/${rec._itemId}`);
-    allATData=allATData.filter(r=>r._itemId!==rec._itemId);
-    renderATTable();renderATAdminTable();showToast("Record deleted.");
-  }catch(e){showToast("Delete failed: "+e.message.slice(0,100));}
+    allATData = allATData.filter(r => r._itemId !== rec._itemId);
+    renderATTable(); renderATAdminTable(); updateATKPIs();
+    showToast("Record deleted.");
+  } catch(e) {
+    showToast("Delete failed: " + e.message.slice(0, 100));
+  }
 }
-/* ══════════════════════════════════════════ END ATTENDANCE TRACKER */
+
+/* ══════════════════════════════════════════════════════════════════════ END */
 
 </script>
 </body>
