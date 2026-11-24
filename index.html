@@ -2212,13 +2212,13 @@ const SAP_COLORS     = ["#1B90FF","#0070F2","#002A86","#89D1FF","#00144A","#4CB1
    ══════════════════════════════════════════════════════════════ */
 
 // ── Set your Azure AD App Registration Client ID here ────────────
-const MSAL_CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // ← replace with your Azure AD app Client ID
+const MSAL_CLIENT_ID = "d929f1e5-738b-4271-ae5b-d1d345c97a97";
 // ─────────────────────────────────────────────────────────────────
 
 const MSAL_CONFIG = {
   auth: {
     clientId: MSAL_CLIENT_ID,
-    authority: "https://login.microsoftonline.com/common",
+    authority: "https://login.microsoftonline.com/42f7676c-f455-423c-82f6-dc2d99791af7",
     redirectUri: window.location.href.split("?")[0]
   },
   cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false }
@@ -4446,7 +4446,7 @@ async function sendSSNotification(rec, statusLabel, opts={}){
 <p>${isForAck?'Kindly go to the system to acknowledge this request. All parties involved — the swap partner and both Team Leaders — must acknowledge in the system. Once all parties have acknowledged, the request will move to <strong>PENDING</strong> for WFM approval.':statusLabel.toUpperCase()==='PENDING'?'All parties have acknowledged. This request is now <strong>PENDING</strong> for WFM approval.':'This is an update on your swap request.'}</p>
 ${isWFMAck?'<p style="background:#EAF4FF;border-left:4px solid #1B90FF;padding:10px 14px;border-radius:0 4px 4px 0;font-size:13px;margin-top:8px"><strong>&#x2139; Note:</strong> Team Lead acknowledgment for this request was completed on behalf by <strong>WFM</strong>.</p><br>':''}
 <br>
-<p>You may view this request thru: <a href="https://macdc06.github.io/USD-Leave-Consumption-Report/" style="color:#1B90FF;font-weight:700;text-decoration:none">USD MNL - Leave Consumption and Scheduling Tool</a></p>
+<p>You may view this request thru: <a href="https://static.ekx.cloud.sap/390e03c1-e96c-4551-b09d-396959a04b03/" style="color:#1B90FF;font-weight:700;text-decoration:none">USD MNL - Leave Consumption and Scheduling Tool</a></p>
 <br>
 <p style="color:#666;font-style:italic;font-size:12px">(This is an automated message, please do not reply)</p>
 <br>
@@ -4466,7 +4466,7 @@ ${isWFMAck?'<p style="background:#EAF4FF;border-left:4px solid #1B90FF;padding:1
 </table>
 ${isForAck?'<p>Kindly log in to the system and go to the <strong>For My Acknowledgment</strong> tab to acknowledge this Slide request. Once acknowledged, the request will move to <strong>PENDING</strong> for approval.</p><br>':''}
 ${isWFMAck?'<p style="background:#EAF4FF;border-left:4px solid #1B90FF;padding:10px 14px;border-radius:0 4px 4px 0;font-size:13px;margin-bottom:8px"><strong>&#x2139; Note:</strong> Team Lead acknowledgment for this request was completed on behalf by <strong>WFM</strong>.</p><br>':''}
-<p>You may view this request thru: <a href="https://macdc06.github.io/USD-Leave-Consumption-Report/" style="color:#1B90FF;font-weight:700;text-decoration:none">USD MNL - Leave Consumption and Scheduling Tool</a></p>
+<p>You may view this request thru: <a href="https://static.ekx.cloud.sap/390e03c1-e96c-4551-b09d-396959a04b03/" style="color:#1B90FF;font-weight:700;text-decoration:none">USD MNL - Leave Consumption and Scheduling Tool</a></p>
 <br>
 <p style="color:#666;font-style:italic;font-size:12px">(This is an automated message, please do not reply)</p>
 <br>
