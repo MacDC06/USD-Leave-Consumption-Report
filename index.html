@@ -2200,6 +2200,29 @@ const LIST_LEAVE_ID  = "74408493-6DED-4742-926C-5F44D3DDDE09";
 const LIST_RLS_ID    = "2E4D9978-EA25-41C2-B082-B879BDE2681B";
 const SITE_PATH_SS   = "/sites/127054";
 const LIST_SS_ID     = "3DBD32E0-DA53-4351-885E-8D57B3EB2EA4";
+
+/* ── Slide / Swap list — confirmed SharePoint field names ────────────
+   Status → field_2  |  Type → ReqType  (verified via FldEdit URLs)
+   ──────────────────────────────────────────────────────────────────── */
+const SS_F = {
+  title            : "Title",             // Request number (auto-generated)
+  requestorName    : "RequestorName",     // Full name of requestor
+  reqType          : "ReqType",           // ✅ "Slide" or "Swap"
+  status           : "field_2",           // ✅ FOR ACKNOWLEDGEMENT / PENDING / APPROVED / REJECTED
+  shiftDate        : "ShiftDate",         // ISO date
+  originalSchedule : "field_3",           // Requestor's current schedule
+  originalRD       : "OriginalRD",        // Requestor's current rest days
+  requestedSchedule: "field_5",           // Desired schedule
+  requestedRD      : "RequestedRD",       // Desired rest days
+  swapName         : "field_4",           // Swap partner name
+  swapEmail        : "field_6",           // Swap partner email
+  teamLead         : "field_7",           // Requestor's Team Lead
+  swapTL           : "field_8",           // Swap partner's Team Lead
+  swapAck          : "field_9",           // Ack tracker "SP=;RTL=;STL="
+  reason           : "Remarks",           // WFM notes / reason
+  agentRemarks     : "Reason",            // Agent's reason for request
+  plotted          : "Plotted_x003f_",    // Boolean
+};
 const CSV_FOLDER     = "USD New Leave Tool";
 const CSV_FILENAME   = "leave-records-approved.csv";
 const CSV_RLS_FILENAME = "UserRLS.csv";
