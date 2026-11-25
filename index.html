@@ -1769,8 +1769,8 @@ document.addEventListener("DOMContentLoaded", async function() {
                   <table>
                     <thead>
                       <tr>
-                        <th>#</th>
                         <th style="width:32px;text-align:center"><input type="checkbox" id="ssAdminSelectAll" title="Select / deselect all" onchange="ssAdminToggleAll(this.checked)" style="cursor:pointer;accent-color:#1B90FF"/></th>
+                        <th style="text-align:center;color:var(--text-muted)">#</th>
                         <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('requestorName')">Requestor <span class="th-sort-icon" id="ssath-requestorName">⇅</span></th>
                         <th style="white-space:nowrap" class="th-sortable" onclick="sortSSAdminTable('title')">Req # <span class="th-sort-icon" id="ssath-title">⇅</span></th>
                         <th class="th-sortable" onclick="sortSSAdminTable('reqType')">Type <span class="th-sort-icon" id="ssath-reqType">⇅</span></th>
@@ -2200,33 +2200,6 @@ const LIST_LEAVE_ID  = "74408493-6DED-4742-926C-5F44D3DDDE09";
 const LIST_RLS_ID    = "2E4D9978-EA25-41C2-B082-B879BDE2681B";
 const SITE_PATH_SS   = "/sites/127054";
 const LIST_SS_ID     = "3DBD32E0-DA53-4351-885E-8D57B3EB2EA4";
-
-/* ── Slide / Swap list — confirmed SharePoint field names ────────────
-   All field names verified via FldEdit.aspx URLs (Nov 2026).
-   ──────────────────────────────────────────────────────────────────── */
-const SS_F = {
-  title            : "Title",             // REQ. NO. / request number
-  requestorName    : "RequestorName",     // Requestor full name
-  reqType          : "ReqType",           // "Slide" or "Swap"
-  status           : "field_2",           // FOR ACKNOWLEDGEMENT / PENDING / APPROVED / REJECTED / CANCELLED
-  shiftDate        : "ShiftDate",         // ISO date
-  plotted          : "Plotted_x003f_",    // Boolean
-  originalSchedule : "field_3",           // Original schedule time
-  originalRD       : "OriginalRD",        // Original rest days
-  requestedSchedule: "field_5",           // Requested schedule time
-  requestedRD      : "RequestedRD",       // Requested rest days
-  swapName         : "field_4",           // Swap partner name
-  swapAck          : "field_9",           // Ack tracker "SP=;RTL=;STL="
-  reason           : "Remarks",           // Agent reason / display Reason
-  agentRemarks     : "Reason",            // WFM remarks
-  teamLead         : "field_7",           // Requestor's Team Lead
-  swapEmail        : "field_6",           // Swap partner email
-  swapTL           : "field_8",           // Swap partner's Team Lead
-  created          : "Created",           // Item created date
-  modified         : "Modified",          // Item modified date
-  modifiedBy       : "Editor",            // Modified By person
-  createdBy        : "Author",            // Created By person
-};
 const CSV_FOLDER     = "USD New Leave Tool";
 const CSV_FILENAME   = "leave-records-approved.csv";
 const CSV_RLS_FILENAME = "UserRLS.csv";
@@ -2663,10 +2636,10 @@ async function loadSSData() {
     document.getElementById("ssLoadingText").textContent="Getting SharePoint site info...";
     ssSiteIdCache=await getSiteIdSS();
     document.getElementById("ssLoadingText").textContent="Loading Slide / Swap records...";
-    const items=await getListItems(ssSiteIdCache,LIST_SS_ID,Object.values(SS_F).join(","));
+    const items=await getListItems(ssSiteIdCache,LIST_SS_ID,"Title,RequestorName,ReqType,field_2,ShiftDate,Plotted_x003f_,field_3,OriginalRD,field_5,RequestedRD,field_4,field_9,Remarks,Reason,field_7,field_6,field_8,Created,Modified");
     allSSData=items.map(i=>{
       const f=i.fields||{};
-      return {_itemId:i.id||"",title:f[SS_F.title]||"",requestorName:f[SS_F.requestorName]||"",reqType:f[SS_F.reqType]||"",status:f[SS_F.status]||"",shiftDate:f[SS_F.shiftDate]||"",plotted:f[SS_F.plotted]!=null?String(f[SS_F.plotted]):"",originalSchedule:f[SS_F.originalSchedule]||"",originalRD:f[SS_F.originalRD]||"",requestedSchedule:f[SS_F.requestedSchedule]||"",requestedRD:f[SS_F.requestedRD]||"",swapName:f[SS_F.swapName]||"",swapAck:f[SS_F.swapAck]||"",agentRemarks:f[SS_F.agentRemarks]||"",reason:f[SS_F.reason]||"",teamLead:normTL(f[SS_F.teamLead]||""),swapEmail:f[SS_F.swapEmail]||"",swapTL:normTL(f[SS_F.swapTL]||""),created:f[SS_F.created]||i.createdDateTime||""};
+      return {_itemId:i.id||"",title:f.Title||"",requestorName:f.RequestorName||"",reqType:f.ReqType||"",status:f.field_2||"",shiftDate:f.ShiftDate||"",plotted:f.Plotted_x003f_!=null?String(f.Plotted_x003f_):"",originalSchedule:f.field_3||"",originalRD:f.OriginalRD||"",requestedSchedule:f.field_5||"",requestedRD:f.RequestedRD||"",swapName:f.field_4||"",swapAck:f.field_9||"",agentRemarks:f.Reason||"",reason:f.Remarks||"",teamLead:normTL(f.field_7||""),swapEmail:f.field_6||"",swapTL:normTL(f.field_8||""),created:f.Created||i.createdDateTime||""};
     });
     // ── Apply RLS visibility filter to SS data ──
     _applyRLSToSSData();
@@ -3638,7 +3611,7 @@ function ssRenderTable(){
   tbody.innerHTML=page.map((r,i)=>{
     const idx=allSSData.indexOf(r);
     const editCell=_admin?`<td><button class="btn-edit-record" data-idx="${idx}">Edit</button></td>`:'';
-    return`<tr><td style="color:var(--text-muted)">${start+i+1}</td><td style="font-weight:700;color:var(--sap-blue-dark);white-space:nowrap">${escHtml(r.title||'—')}</td><td style="white-space:nowrap"><strong>${escHtml(r.requestorName||r.title)}</strong></td><td style="white-space:nowrap">${ssReqTypeBadge(r.reqType)}</td><td style="white-space:nowrap">${ssStatusBadge(r.status)}</td><td style="white-space:nowrap">${formatDate(r.shiftDate)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.originalSchedule)}</td><td style="white-space:nowrap">${escHtml(r.originalRD)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.requestedSchedule)}</td><td style="white-space:nowrap">${escHtml(r.requestedRD)}</td><td style="white-space:nowrap"><strong>${escHtml(r.swapName)}</strong></td><td style="white-space:nowrap;font-size:11.5px">${escHtml(fmtSwapAck(r))}</td><td style="white-space:nowrap">${escHtml(r.teamLead)}</td><td style="white-space:nowrap">${plottedBadge(r.plotted)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.reason)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.agentRemarks)}</td>${editCell}</tr>`;
+    return`<tr><td style="color:var(--text-muted)">${start+i+1}</td><td style="font-weight:700;color:var(--sap-blue-dark);white-space:nowrap">${escHtml(r.title||'—')}</td><td style="white-space:nowrap"><strong>${escHtml(r.requestorName||r.title)}</strong></td><td style="white-space:nowrap;font-size:12px;color:var(--sap-blue-dark);font-weight:600">${escHtml(r.title||'—')}</td><td style="white-space:nowrap">${ssReqTypeBadge(r.reqType)}</td><td style="white-space:nowrap">${ssStatusBadge(r.status)}</td><td style="white-space:nowrap">${formatDate(r.shiftDate)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.originalSchedule)}</td><td style="white-space:nowrap">${escHtml(r.originalRD)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.requestedSchedule)}</td><td style="white-space:nowrap">${escHtml(r.requestedRD)}</td><td style="white-space:nowrap"><strong>${escHtml(r.swapName)}</strong></td><td style="white-space:nowrap;font-size:11.5px">${escHtml(fmtSwapAck(r))}</td><td style="white-space:nowrap">${escHtml(r.teamLead)}</td><td style="white-space:nowrap">${plottedBadge(r.plotted)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.reason)}</td><td style="white-space:nowrap;font-size:12px">${escHtml(r.agentRemarks)}</td>${editCell}</tr>`;
   }).join("");
   tbody.querySelectorAll(".btn-edit-record[data-idx]").forEach(btn=>btn.addEventListener("click",()=>openSSEditModal(+btn.dataset.idx)));
   renderPagination(document.getElementById("ssTablePagination"),ssCurrentPage,total,(p)=>{ssCurrentPage=p;ssRenderTable();const tw=document.querySelector("#ss-tab-records .table-wrap");if(tw)tw.scrollTop=0;});
@@ -3827,7 +3800,7 @@ async function approveSelectedSSRequests(){
   for(const r of toApprove){
     try{
       const url=`https://graph.microsoft.com/v1.0/sites/${ssSiteIdCache}/lists/${LIST_SS_ID}/items/${r._itemId}/fields`;
-      await graphPatch(url,{[SS_F.status]:'APPROVED',[SS_F.plotted]:true});
+      await graphPatch(url,{field_2:'APPROVED','Plotted_x003f_':true});
       r.status='APPROVED'; r.plotted='true';
       sendSSNotification(r,'APPROVED').catch(()=>{});
       logSSActivity('Edited',r,'APPROVED','Approved via selection — Plotted set to Yes').catch(()=>{});
@@ -4403,7 +4376,7 @@ async function ackSwap(idx, approve){
     newStatus=allDone?'PENDING':'FOR ACKNOWLEDGEMENT';
     remark=allDone?`All parties acknowledged — pending WFM`:_wfmOnBehalf?`All parties acknowledged by WFM on behalf`:`Approved by ${roleTxt}`;
   }
-  const f={[SS_F.status]:newStatus, [SS_F.swapAck]:_ackStr(a)};
+  const f={field_2:newStatus, field_9:_ackStr(a)};
   const url=`https://graph.microsoft.com/v1.0/sites/${ssSiteIdCache}/lists/${LIST_SS_ID}/items/${r._itemId}/fields`;
   try{
     showToast('Submitting…');
@@ -4594,18 +4567,18 @@ async function submitSSRequest(){
   }
   btn.disabled=true;msg.textContent="Submitting…";msg.style.color="var(--sap-navy)";
   const _isSwapReq=(rt||"").toLowerCase()==="swap";
-  const f={[SS_F.title]:reqNum,[SS_F.requestorName]:nm,[SS_F.reqType]:rt,[SS_F.status]:"FOR ACKNOWLEDGEMENT",[SS_F.shiftDate]:sd+"T00:00:00Z"};
-  if(os)f[SS_F.originalSchedule]=os;
-  if(ord)f[SS_F.originalRD]=ord;
-  if(rs)f[SS_F.requestedSchedule]=rs;
-  if(rrd)f[SS_F.requestedRD]=rrd;
-  if(tl)f[SS_F.teamLead]=tl;
-  if(re)f[SS_F.agentRemarks]=re;
+  const f={Title:reqNum,RequestorName:nm,ReqType:rt,field_2:"FOR ACKNOWLEDGEMENT",ShiftDate:sd+"T00:00:00Z"};
+  if(os)f.field_3=os;
+  if(ord)f.OriginalRD=ord;
+  if(rs)f.field_5=rs;
+  if(rrd)f.RequestedRD=rrd;
+  if(tl)f.field_7=tl;
+  if(re)f.Reason=re;
   // Initialise acknowledgment tracker for both Slide and Swap
-  f[SS_F.swapAck]="SP=;RTL=;STL=";
+  f.field_9="SP=;RTL=;STL=";
   if(isSwap){
-    if(sn)f[SS_F.swapName]=sn;
-    if(se)f[SS_F.swapEmail]=se;
+    if(sn)f.field_4=sn;
+    if(se)f.field_6=se;
     if(stl)f.field_8=stl;
   }
   const url=`https://graph.microsoft.com/v1.0/sites/${ssSiteIdCache}/lists/${LIST_SS_ID}/items`;
@@ -4721,22 +4694,22 @@ async function saveSSRecord(){
   btn.disabled=true;msg.textContent="Saving...";msg.style.color="var(--sap-navy)";
   const toISO=v=>v?v+"T00:00:00Z":null;
   const f={};
-  f[SS_F.status]=document.getElementById("sfStatus").value;
-  const tl=document.getElementById("sfTeamLead").value.trim();if(tl)f[SS_F.teamLead]=tl;
-  const sa=document.getElementById("sfSwapAck").value.trim();if(sa)f[SS_F.swapAck]=sa;
+  f.field_2=document.getElementById("sfStatus").value;
+  const tl=document.getElementById("sfTeamLead").value.trim();if(tl)f.field_7=tl;
+  const sa=document.getElementById("sfSwapAck").value.trim();if(sa)f.field_9=sa;
   const ar=document.getElementById("sfAgentRemarks").value.trim();if(ar)f.Reason=ar;
   /* WFM can save all request details */
   if(isWFM()){
-    const sd=document.getElementById("sfShiftDate").value;if(sd)f[SS_F.shiftDate]=sd+"T00:00:00Z";
-    const os=document.getElementById("sfOriginalSchedule").value.trim();if(os)f[SS_F.originalSchedule]=os;
-    const ord=document.getElementById("sfOriginalRD").value.trim();if(ord)f[SS_F.originalRD]=ord;
-    const rs=document.getElementById("sfRequestedSchedule").value.trim();if(rs)f[SS_F.requestedSchedule]=rs;
-    const rrd=document.getElementById("sfRequestedRD").value.trim();if(rrd)f[SS_F.requestedRD]=rrd;
-    const sn=document.getElementById("sfSwapName").value.trim();if(sn)f[SS_F.swapName]=sn;
-    const se=document.getElementById("sfSwapEmail").value.trim();if(se)f[SS_F.swapEmail]=se;
-    const st=document.getElementById("sfSwapTL").value.trim();if(st)f[SS_F.swapTL]=st;
-    const re=document.getElementById("sfReason").value.trim();if(re)f[SS_F.agentRemarks]=re;
-    f[SS_F.reqType]=document.getElementById("sfReqType").value;
+    const sd=document.getElementById("sfShiftDate").value;if(sd)f.ShiftDate=sd+"T00:00:00Z";
+    const os=document.getElementById("sfOriginalSchedule").value.trim();if(os)f.field_3=os;
+    const ord=document.getElementById("sfOriginalRD").value.trim();if(ord)f.OriginalRD=ord;
+    const rs=document.getElementById("sfRequestedSchedule").value.trim();if(rs)f.field_5=rs;
+    const rrd=document.getElementById("sfRequestedRD").value.trim();if(rrd)f.RequestedRD=rrd;
+    const sn=document.getElementById("sfSwapName").value.trim();if(sn)f.field_4=sn;
+    const se=document.getElementById("sfSwapEmail").value.trim();if(se)f.field_6=se;
+    const st=document.getElementById("sfSwapTL").value.trim();if(st)f.field_8=st;
+    const re=document.getElementById("sfReason").value.trim();if(re)f.Remarks=re;
+    f.ReqType=document.getElementById("sfReqType").value;
   }
   const pv=document.getElementById("sfPlotted").value;
   if(pv==="true")f["Plotted_x003f_"]=true;else if(pv==="false")f["Plotted_x003f_"]=false;
